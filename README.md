@@ -1,1 +1,3 @@
-# sw
+# Shallow water model
+
+Python
