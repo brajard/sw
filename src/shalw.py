@@ -232,6 +232,7 @@ class SWmodel:
 		self._t = int(ds.time[time])
 		for parname in (self)._restVar:
 			self.set_state(parname,ds[parname])
+		self._isinit = True
 
 
 #Save/Load functions
@@ -421,6 +422,9 @@ class SWmodel:
 		:rtype: numpy.ndarray
 		"""
 		return self._y
+
+	def set_time( self,value ):
+		self._t = value
 
 	@property
 	def alpha ( self ):
