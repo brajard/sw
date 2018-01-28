@@ -13,7 +13,7 @@ except:
 	PLOT = False
 
 rfile = '../data/restart_10years.nc'
-outfile = '../data/base_10years.nc'
+outfile = '../data/base_10years-2.nc'
 SW = SWmodel(nx=80,ny=80)
 SW.inistate_rst(rfile)
 SW.set_time(0)

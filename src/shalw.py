@@ -5,6 +5,7 @@ from collections import defaultdict
 import numpy as np
 import xarray as xr
 import time
+from tqdm import tqdm
 
 try:
 	import matplotlib.pyplot as plt
@@ -75,7 +76,8 @@ class SWmodel:
 		# h,u,v
 		# Verbose mode
 		#state variables
-		self._varname = {'ufil','uphy','vfil','vphy','hfil','hphy','upre','vpre','hpre','vit','vor'}
+		self._varname = {'ufil','uphy','vfil','vphy','hfil','hphy','upre','vpre','hpre','vit','vor',
+			'hdyn','udyn','uforc','uparam','vdyn','vforc','vparam'}
 
 		# Compute bool
 		self._recompute_grid = True
@@ -103,14 +105,28 @@ class SWmodel:
 		self.VOR()
 		self.VIT()
 		#uphy,vphy,hphy
-		self.hphy = self.hfil - 2 * self.dt * (self.MCU() / self.dx + self.MCV() / self.dy)
+		self.hdyn = (self.MCU() / self.dx + self.MCV() / self.dy)
+		self.hphy = self.hfil - 2 * self.dt * self.hdyn
 
+		self.udyn = self.LAMV()-self.GRADX()/self.dx
+		self.uforc =  self.TAUX()
+		self.uparam = - self.DISU() + self.DIFU()
+		self.udyn[:,-1] = 0
+		self.uforc[:,-1] = 0
+		self.uparam[:,-1] = 0
 		self.uphy = self.ufil + 2*self.dt*(
-			self.LAMV()-self.GRADX()/self.dx - self.DISU() + self.TAUX() + self.DIFU())
-		self.uphy[:,-1] = 0
+			self.udyn + self.uparam + self.uforc)
+		#self.uphy[:,-1] = 0
+
+		self.vdyn = -self.LAMU()-self.GRADY()/self.dy
+		self.vforc = self.TAUY()
+		self.vparam = - self.DISV() + self.DIFU()
+		self.vdyn[0,:] = 0
+		self.vforc[0,:] = 0
+		self.vparam[0,:] = 0
 		self.vphy = self.vfil + 2*self.dt*(
-			-self.LAMU()-self.GRADY()/self.dy - self.DISV() + self.TAUY() + self.DIFU())
-		self.vphy[0,:] = 0
+			self.vdyn + self.vparam + self.vforc)
+		#self.vphy[0,:] = 0
 
 
 		#ufil,vfil,hfil =
@@ -304,6 +320,48 @@ class SWmodel:
 	@hfil.setter
 	def hfil(self,value):
 		self.set_state('hfil',value)
+	@property
+	def hdyn(self):
+		return self.get_state('hdyn')
+	@hdyn.setter
+	def hdyn(self,value):
+		self.set_state('hdyn',value)
+	@property
+	def udyn(self):
+		return self.get_state('udyn')
+	@udyn.setter
+	def udyn(self,value):
+		self.set_state('udyn',value)
+	@property
+	def vdyn(self):
+		return self.get_state('vdyn')
+	@vdyn.setter
+	def vdyn(self,value):
+		self.set_state('vdyn',value)
+	@property
+	def uforc(self):
+		return self.get_state('uforc')
+	@uforc.setter
+	def uforc(self,value):
+		self.set_state('uforc',value)
+	@property
+	def vforc(self):
+		return self.get_state('vforc')
+	@vforc.setter
+	def vforc(self,value):
+		self.set_state('vforc',value)
+	@property
+	def uparam(self):
+		return self.get_state('uparam')
+	@uparam.setter
+	def uparam(self,value):
+		self.set_state('uparam',value)
+	@property
+	def vparam(self):
+		return self.get_state('vparam')
+	@vparam.setter
+	def vparam(self,value):
+		self.set_state('vparam',value)
 	@property
 	def hpre(self):
 		return self.get_state('hpre')
@@ -639,34 +697,36 @@ class SWmodel:
 
 if __name__ == "__main__":
 	SW = SWmodel(nx=80,ny=80)
-	SW.initstate_cst(0,0,0)
+	rfile = '../data/restart_10years.nc'
+	SW = SWmodel(nx=80, ny=80)
+	SW.inistate_rst(rfile)
+	SW.set_time(0)
 	#time of the spinup
 	#endtime = 12*30*12*10 #10 years
-	endtime = 500
+	endtime = 12*30*12
 	#Declare to save all phy parameters (default) every 12*30 time step(1 month)
 	#10000 is approximatively 13 months
-	SW.save(time=np.arange(0,endtime,12*30),name='spinup.nc')
+	para = {'hphy','hdyn','uphy','udyn','uforc','uparam'}
+	SW.save(time=np.arange(1,endtime,7*12),para=para,name='test.nc')
 
 	#Run the model
 	start = time.time()
 
-	for i in range(endtime):
+	for i in tqdm(range(endtime)):
 		SW.next()
 	end = time.time()
 	print('run duration',end - start,'seconds')
-	SW.save_rst(name='restart.nc')
+	#SW.save_rst(name='restart.nc')
 	#Plot the final state
 	if PLOT:
+		ds = xr.open_dataset('test.nc')
 		#plt.imshow(SW.get_state('vor'))
 		#plt.colorbar()
 		#plt.show()
-		plt.imshow(SW.hfil)
-		plt.colorbar()
+		x,y = 20,41
+		fig, axes = plt.subplots(nrows=4,sharex=True)
+		ds.uphy.isel(x=x, y=y).plot(ax=axes[0])
+		ds.udyn.isel(x=x, y=y).plot(ax=axes[1])
+		ds.uparam.isel(x=x, y=y).plot(ax=axes[2])
+		ds.uforc.isel(x=x, y=y).plot(ax=axes[3])
 		plt.show()
-		plt.imshow(SW.ufil)
-		plt.colorbar()
-		plt.show()
-		plt.imshow(SW.vfil)
-		plt.colorbar()
-		plt.show()
-
