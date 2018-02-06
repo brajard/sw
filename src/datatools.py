@@ -47,7 +47,7 @@ def MakeBase1im(infield,outfield,nout=(1,1),delta=(1,1)):
 		(out[:,0,:,:],indin) = MakeSmallImages(data,n=(nyin,nxin))
 		ldatain.append(out)
 	datain = np.concatenate(ldatain,axis=1)
-	return ((datain,indin),(dataout,indout))
+	return (datain,indin),(dataout,indout)
 
 class mydata:
 	def __init__( self, fname, outfield,infield, forcfield, nout=(1,1),delta=(1,1),dt=1, SW=None):
@@ -85,8 +85,8 @@ class mydata:
 		lindoutt = []
 		for tin,tout in self.t:
 			(X1im,(indin1y,indin1x)),(y1im,(indouty,indoutx)) = MakeBase1im(
-				[self.data.uphy.sel(time=tin)],
-				self.data.uparam.sel(time=tout),
+				[self.data[f].sel(time=tin) for f in self.infield],
+				self.data[self.outfield].sel(time=tout),
 				nout=nout,delta=delta)
 			lX.append(X1im)
 			ly.append(y1im)
@@ -106,7 +106,7 @@ class mydata:
 		#self._indinx = lindinx
 		self._indinx = np.concatenate(lindinx,axis=0)
 		self._indiny = np.concatenate(lindiny,axis=0)
-		self._indoutx = np.concatenate(lindouty,axis=0)
+		self._indoutx = np.concatenate(lindoutx,axis=0)
 		self._indouty = np.concatenate(lindouty,axis=0)
 		self._indint = np.concatenate(lindint,axis=0)
 		self._indoutt = np.concatenate(lindoutt,axis=0)
@@ -133,9 +133,14 @@ class mydata:
 	@property
 	def dt( self ):
 		return self._dt
+	@property
+	def outfield( self ):
+		return self._outfield
 
 if __name__ == "__main__":
 	appfile = '../data/base_10years.nc'
 	#data = xr.open_dataset(appfile)
 	#out,ind = MakeSmallImages(data.hphy[0,:,:])
-	app = mydata(appfile,[],[],[])
+	infield = ['uphy','hphy']
+	outfield = 'uparam'
+	app = mydata(appfile,outfield=outfield,infield=infield,forcfield=[])
