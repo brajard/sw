@@ -109,23 +109,23 @@ class SWmodel:
 		self.hphy = self.hfil - 2 * self.dt * self.hdyn
 
 		self.udyn = self.LAMV()-self.GRADX()/self.dx
-		self.uforc =  self.TAUX()
-		self.uparam = - self.DISU() + self.DIFU()
+		#self.uforc =  self.TAUX()
+		self.uparam = - self.DISU() + self.DIFU()+ self.TAUX()
 		self.udyn[:,-1] = 0
-		self.uforc[:,-1] = 0
+		#self.uforc[:,-1] = 0
 		self.uparam[:,-1] = 0
 		self.uphy = self.ufil + 2*self.dt*(
-			self.udyn + self.uparam + self.uforc)
+			self.udyn + self.uparam )
 		#self.uphy[:,-1] = 0
 
 		self.vdyn = -self.LAMU()-self.GRADY()/self.dy
-		self.vforc = self.TAUY()
-		self.vparam = - self.DISV() + self.DIFU()
+		#self.vforc = self.TAUY()
+		self.vparam = - self.DISV() + self.DIFV()+ self.TAUY()
 		self.vdyn[0,:] = 0
-		self.vforc[0,:] = 0
+		#self.vforc[0,:] = 0
 		self.vparam[0,:] = 0
 		self.vphy = self.vfil + 2*self.dt*(
-			self.vdyn + self.vparam + self.vforc)
+			self.vdyn + self.vparam )
 		#self.vphy[0,:] = 0
 
 
@@ -703,11 +703,11 @@ if __name__ == "__main__":
 	SW.set_time(0)
 	#time of the spinup
 	#endtime = 12*30*12*10 #10 years
-	endtime = 12*30*12
+	endtime = 12*30*12*4
 	#Declare to save all phy parameters (default) every 12*30 time step(1 month)
 	#10000 is approximatively 13 months
 	para = {'hphy','hdyn','uphy','udyn','uforc','uparam'}
-	SW.save(time=np.arange(1,endtime,7*12),para=para,name='test.nc')
+	SW.save(time=np.arange(1,endtime,12*7),para=para,name='test.nc')
 
 	#Run the model
 	start = time.time()
