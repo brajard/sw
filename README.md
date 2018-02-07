@@ -3,4 +3,4 @@
 Python
 ## Install
 - Follow the install procedure on https://www.tensorflow.org/install using virtualenv
-- `pip install xarray tqdm scipy h5py sklearn`
+- `pip install xarray tqdm scipy h5py sklearn matplotlib`
