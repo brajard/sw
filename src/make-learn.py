@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
-from modeltools import mymodel
+from modeltools import mymodel,loadmymodel
 try:
 	import matplotlib.pyplot as plt
 
@@ -35,27 +35,27 @@ model.add(Flatten())
 model.compile(loss='mean_squared_error', optimizer='adam')
 
 #normalization
-Xtrain_n = np.zeros_like(X_train)
-Xtest_n = np.zeros_like(X_test)
+#Xtrain_n = np.zeros_like(X_train)
+#Xtest_n = np.zeros_like(X_test)
 moy = np.zeros(npar)
 et = np.zeros(npar)
 for j in range(npar):
 	moy[j] = np.mean(X_train[:,:,:,j].ravel())
 	et[j] = np.std(X_train[:,:,:,j].ravel())
-	Xtrain_n[:,:,:,j] = (X_train[:,:,:,j] - moy[j])/et[j]
-	Xtest_n[:,:,:,j] = (X_test[:,:,:,j] - moy[j])/et[j]
-
-
+#	Xtrain_n[:,:,:,j] = (X_train[:,:,:,j] - moy[j])/et[j]
+#	Xtest_n[:,:,:,j] = (X_test[:,:,:,j] - moy[j])/et[j]
 moy_y = np.mean(y_train)
 et_y = np.std(y_train)
-ytrain_n = (y_train - moy_y)/et_y
-ytest_n = (y_test - moy_y)/et_y
-
+#ytrain_n = (y_train - moy_y)/et_y
+#ytest_n = (y_test - moy_y)/et_y
+nn = mymodel(model,moyX=moy,etX=et,moyY=moy_y,etY=et_y)
 
 #Training
-model.fit(Xtrain_n, ytrain_n, epochs=4, batch_size=128)
+nn.fit(X_train, y_train, epochs=5, batch_size=128)
 
-y_predict = model.predict(Xtest_n)
+y_predict = nn.predict(X_test)
 if PLOT:
-	plt.plot(ytest_n,y_predict,'.')
+	plt.plot(y_test,y_predict,'.')
 	plt.show()
+nn.save('../data/model_upar.pkl')
+

@@ -1,6 +1,8 @@
 """contains functionality to handle data"""
 import numpy as np
 import xarray as xr
+import os
+from os.path import join,isdir
 from shalw import SWmodel
 
 def MakeSmallImages(field,n=(3,3)):
@@ -43,10 +45,10 @@ def MakeBase1im(infield,outfield,nout=(1,1),delta=(1,1)):
 	n = ny*nx
 	ldatain=[]
 	for data in infield:
-		out = np.empty(shape=(n,1,nyin,nxin))
-		(out[:,0,:,:],indin) = MakeSmallImages(data,n=(nyin,nxin))
+		out = np.empty(shape=(n,nyin,nxin,1))
+		(out[:,:,:,0],indin) = MakeSmallImages(data,n=(nyin,nxin))
 		ldatain.append(out)
-	datain = np.concatenate(ldatain,axis=1)
+	datain = np.concatenate(ldatain,axis=3)
 	return (datain,indin),(dataout,indout)
 
 class mydata:
@@ -67,13 +69,20 @@ class mydata:
 		for t in self.data.time[:-self.dt]:
 			if int(t+dt) in self.data.time.values:
 				self._t.append((t,t+dt))
-		ny,nx = len(self.data.y),len(self.data.x)
-		nyout,nxout = nout
-		dy, dx = delta
-		nyin, nxin = nyout + 2 * dy, nxout + 2 * dx
 
-		#X = np.empty(shape=(0,1,nyin,nxin))
-		#y = np.empty(shape=(0,1,nyout,nxout))
+		self._X = None
+		self._y = None
+		self._indinx = None
+		self._indiny = None
+		self._indoutx = None
+		self._indouty = None
+		self._indint = None
+		self._indoutt = None
+
+	def make_base( self ):
+		ny, nx = len(self.data.y), len(self.data.x)
+		nyout, nxout = self._nout
+		dy, dx = self._delta
 		lX = []
 		ly = []
 		lindinx = []
@@ -85,9 +94,10 @@ class mydata:
 		lindoutt = []
 		for tin,tout in self.t:
 			(X1im,(indin1y,indin1x)),(y1im,(indouty,indoutx)) = MakeBase1im(
-				[self.data[f].sel(time=tin) for f in self.infield],
+				[self.data[f].sel(time=tin) for f in self.infield]+\
+				[getattr(self._SW,name) for name in self.forcfield],
 				self.data[self.outfield].sel(time=tout),
-				nout=nout,delta=delta)
+				nout=self._nout,delta=self._delta)
 			lX.append(X1im)
 			ly.append(y1im)
 			lindinx.append(indin1x)
@@ -102,7 +112,7 @@ class mydata:
 			#y = np.concatenate((y,y1im),axis=0)
 		#self._X = lX
 		self._X = np.concatenate(lX,axis=0)
-		self._y = np.concatenate(ly,axis=0)
+		self._y = np.squeeze(np.concatenate(ly,axis=0),axis=2)
 		#self._indinx = lindinx
 		self._indinx = np.concatenate(lindinx,axis=0)
 		self._indiny = np.concatenate(lindiny,axis=0)
@@ -110,6 +120,16 @@ class mydata:
 		self._indouty = np.concatenate(lindouty,axis=0)
 		self._indint = np.concatenate(lindint,axis=0)
 		self._indoutt = np.concatenate(lindoutt,axis=0)
+
+	def save_base( self,indir,pref='data' ,mkdir=True):
+		if mkdir and not isdir(indir):
+			os.mkdir(indir)
+		att2save = {'_X','_y',
+			'_indinx','_indiny',
+			'_indoutx','_indouty',
+			'_indint','_indoutt'}
+		for name in att2save:
+			np.save(join(indir,pref+name+'.npy'),getattr(self,name))
 
 
 
@@ -143,4 +163,6 @@ if __name__ == "__main__":
 	#out,ind = MakeSmallImages(data.hphy[0,:,:])
 	infield = ['uphy','hphy']
 	outfield = 'uparam'
-	app = mydata(appfile,outfield=outfield,infield=infield,forcfield=[])
+	app = mydata(appfile,outfield=outfield,infield=infield,forcfield=['taux'])
+	app.make_base()
+	app.save_base(('../data/app-uparam'))
