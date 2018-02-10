@@ -1,7 +1,15 @@
 import numpy as np
 import pickle
 from keras.models import load_model
+from shalw import SWmodel
+from datatools import mydata, MakeBigImage
+import xarray as xr
+try:
+	import matplotlib.pyplot as plt
 
+	PLOT = True
+except:
+	PLOT = False
 
 def standardization (x,m,et):
 	return (x-m)/et
@@ -77,6 +85,42 @@ class mymodel:
 		self._model = savemodel
 	def load_model( self ):
 		self._model = load_model(self._modelfile)
+	def predictfield( self,data,outfield,infield, forcfield,
+	SW=None):
+		if SW is None:
+			SW = SWmodel()
+		nout = (1,1)
+		delta = (1,1)
+		field=mydata(data, outfield=outfield,
+			infield=infield, forcfield=forcfield, nout=nout, delta=delta,
+			dt=1, SW=SW )
+		field.make_base()
+		y_predict = self.predict(field._X)
+		outfield = MakeBigImage(y_predict,
+			ind=(field._indouty,field._indoutx))
+		return outfield
 
+if __name__ == "__main__":
+	name = '../data/model_upar.pkl'
+	nn = loadmymodel(name)
+	# nn = mymodel(model=nntmp._model,
+	# 	moyX = nntmp._moyX,etX=nntmp._etX,
+	# 	moyY = nntmp._moyY,etY=nntmp._etY)
+	testfile = '../data/test_image.nc'
+	tdata = xr.open_dataset(testfile)
+	infield = ['uphy', 'hphy']
+	outfield = 'uparam'
+	forcfield = ['taux']
+	y = nn.predictfield(tdata,
+			outfield=outfield,infield=infield,forcfield=forcfield)
 
-
+	fig, (ax1, ax2,ax3) = plt.subplots(ncols=3)
+	p1 = ax1.imshow(tdata['uparam'][1,:,:])
+	p2 = ax2.imshow(y)
+	p3 = ax3.imshow(y-tdata['uparam'][1,:,:],
+		cmap=plt.get_cmap('bwr'))
+	fig.colorbar(p1,ax=ax1)
+	fig.colorbar(p2,ax=ax2)
+	fig.colorbar(p3,ax=ax3)
+	plt.tight_layout()
+	plt.show()

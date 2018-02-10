@@ -4,6 +4,35 @@ import xarray as xr
 import os
 from os.path import join,isdir
 from shalw import SWmodel
+try:
+	import matplotlib.pyplot as plt
+
+	PLOT = True
+except:
+	PLOT = False
+
+def MakeBigImage(smallimage,ind):
+	indy,indx = ind
+	ny,nx = max(indy)+1,max(indx)+1
+	out = np.empty(shape = (ny,nx))
+	for i,(iy,ix) in enumerate(zip(indy,indx)):
+		out[iy,ix] = smallimage[i]
+	return out
+
+def MakeSmallImages_ind(fieldshape,n=(3,3)):
+	Ly,Lx = fieldshape
+	nx, ny = n
+	ni = Ly*Lx
+	indx = np.empty(shape=ni, dtype=int)
+	indy = np.empty(shape=ni, dtype=int)
+	dy, dx = (ny // 2), (nx // 2)
+	i = 0  # index in out
+	for ix in range(dx, Lx + dx):
+		for iy in range(dy, Ly + dy):
+			indy[i] = iy - dy  # because we want index of the orginal field
+			indx[i] = ix - dx
+			i = i + 1
+	return (indy,indx)
 
 def MakeSmallImages(field,n=(3,3)):
 	"""
@@ -53,7 +82,6 @@ def MakeBase1im(infield,outfield,nout=(1,1),delta=(1,1)):
 
 class mydata:
 	def __init__( self, fname, outfield,infield, forcfield, nout=(1,1),delta=(1,1),dt=1, SW=None):
-		self._fname = fname
 		self._outfield = outfield
 		self._infield = infield
 		self._forcfield = forcfield
@@ -62,8 +90,15 @@ class mydata:
 		self._dt = dt
 		if SW is None:
 			self._SW = SWmodel()
+		else:
+			self._SW = SW
+		if isinstance(fname,str):
+			self._fname = fname
+			self._data = xr.open_dataset(self.fname)
+		else:
+			self._fname = ''
+			self._data = fname
 
-		self._data = xr.open_dataset(self.fname)
 		#define times
 		self._t = []
 		for t in self.data.time[:-self.dt]:
@@ -165,4 +200,11 @@ if __name__ == "__main__":
 	outfield = 'uparam'
 	app = mydata(appfile,outfield=outfield,infield=infield,forcfield=['taux'])
 	app.make_base()
-	app.save_base(('../data/app-uparam'))
+	#app.save_base(('../data/app-uparam'))
+
+	#test makebigimage
+	data = xr.open_dataset(appfile)
+	out,ind = MakeSmallImages(data.uparam[10,:,:],n=(1,1))
+	rec2D = MakeBigImage(out,ind)
+	plt.imshow(data.uparam[10,:,:]-rec2D)
+	plt.show()

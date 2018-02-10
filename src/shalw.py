@@ -23,6 +23,7 @@ def debug ( func ):
 	return func_wrapper
 
 
+
 class SWmodel:
 	#edge to deal with boarders
 	_nedge = 1
@@ -101,29 +102,28 @@ class SWmodel:
 		self._dstate['hpre']=self._dstate['hphy'].copy()
 		self._dstate['upre']=self._dstate['uphy'].copy()
 		self._dstate['vpre']=self._dstate['vphy'].copy()
-		#VOR et VIT computation
-		self.VOR()
-		self.VIT()
+
+
+		# precomputation VOR et VIT computation
+		self.precompute()
+
 		#uphy,vphy,hphy
 		self.hdyn = (self.MCU() / self.dx + self.MCV() / self.dy)
 		self.hphy = self.hfil - 2 * self.dt * self.hdyn
 
+		self.computeuparam()
 		self.udyn = self.LAMV()-self.GRADX()/self.dx
 		#self.uforc =  self.TAUX()
-		self.uparam = - self.DISU() + self.DIFU()+ self.TAUX()
 		self.udyn[:,-1] = 0
 		#self.uforc[:,-1] = 0
-		self.uparam[:,-1] = 0
 		self.uphy = self.ufil + 2*self.dt*(
 			self.udyn + self.uparam )
 		#self.uphy[:,-1] = 0
-
+		self.computevparam()
 		self.vdyn = -self.LAMU()-self.GRADY()/self.dy
 		#self.vforc = self.TAUY()
-		self.vparam = - self.DISV() + self.DIFV()+ self.TAUY()
 		self.vdyn[0,:] = 0
 		#self.vforc[0,:] = 0
-		self.vparam[0,:] = 0
 		self.vphy = self.vfil + 2*self.dt*(
 			self.vdyn + self.vparam )
 		#self.vphy[0,:] = 0
@@ -135,8 +135,17 @@ class SWmodel:
 		self.hfil = self.hpre + self.alpha*(self.hfil - 2 * self.hpre + self.hphy)
 		self._t += 1
 
+	def computeuparam( self ):
+		self.uparam = - self.DISU() + self.DIFU() + self.TAUX()
+		self.uparam[:, -1] = 0
 
+	def computevparam( self ):
+		self.vparam = - self.DISV() + self.DIFV()+ self.TAUY()
+		self.vparam[0, :] = 0
 
+	def precompute( self ):
+		self.VOR()
+		self.VIT()
 	def TAUX(self):
 		hphy = self._dstate['hphy']
 		moyh = .5*(hphy[self.ind((0,1))]+hphy[self.ind((0,0))])
@@ -694,7 +703,6 @@ class SWmodel:
 
 		return self
 
-
 if __name__ == "__main__":
 	SW = SWmodel(nx=80,ny=80)
 	rfile = '../data/restart_10years.nc'
@@ -707,7 +715,7 @@ if __name__ == "__main__":
 	#Declare to save all phy parameters (default) every 12*30 time step(1 month)
 	#10000 is approximatively 13 months
 	para = {'hphy','hdyn','uphy','udyn','uforc','uparam'}
-	SW.save(time=np.arange(1,endtime,12*7),para=para,name='test.nc')
+	SW.save(time=np.arange(1,endtime,12*7),para=para,name='test2.nc')
 
 	#Run the model
 	start = time.time()
