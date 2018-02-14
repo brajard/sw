@@ -101,7 +101,11 @@ class mydata:
 
 		#define times
 		self._t = []
-		for t in self.data.time[:-self.dt]:
+		if self.dt == 0:
+			tslice = slice(0,None)
+		else:
+			tslice = slice(0,-self.dt)
+		for t in self.data.time[tslice]:
 			if int(t+dt) in self.data.time.values:
 				self._t.append((t,t+dt))
 
