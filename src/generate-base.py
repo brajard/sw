@@ -34,7 +34,7 @@ for s in starts:
 	time = np.concatenate((time, np.arange(s,s+nseq)), axis=0)
 
 SW.save(time=time, para=para,name=outfile)
-SW.save(time=range(endtime+testime-2,endtime+testime),
+SW.save(time=range(endtime+testime-nseq,endtime+testime),
 	para=para,name=testfile)
 for i in tqdm(range(endtime+testime)):
 	SW.next()
