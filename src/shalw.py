@@ -190,6 +190,7 @@ class SWmodel:
 		       self.f
 		self.set_state('vor',vor)
 		#Copy to unbiased the mean computation in LAMU and LAMV
+		#other solution: vor = 0 ?????
 		self._dstate['vor'][:,type(self)._nedge-1] = self._dstate['vor'][:,type(self)._nedge]
 		self._dstate['vor'][self._endy,:] = self._dstate['vor'][self._endy-1,:]
 
@@ -711,11 +712,11 @@ if __name__ == "__main__":
 	SW.set_time(0)
 	#time of the spinup
 	#endtime = 12*30*12*10 #10 years
-	endtime = 12*30*12*4
+	endtime = 12*30*12*1
 	#Declare to save all phy parameters (default) every 12*30 time step(1 month)
 	#10000 is approximatively 13 months
 	para = {'hphy','hdyn','uphy','udyn','uforc','uparam'}
-	SW.save(time=np.arange(1,endtime,12*7),para=para,name='test2.nc')
+	SW.save(time=np.arange(1,endtime,12*7),para=para,name='test.nc')
 
 	#Run the model
 	start = time.time()
@@ -726,6 +727,9 @@ if __name__ == "__main__":
 	print('run duration',end - start,'seconds')
 	#SW.save_rst(name='restart.nc')
 	#Plot the final state
+
+
+
 	if PLOT:
 		ds = xr.open_dataset('test.nc')
 		#plt.imshow(SW.get_state('vor'))
