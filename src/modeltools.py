@@ -12,6 +12,8 @@ except:
 	PLOT = False
 
 def standardization (x,m,et):
+	if et<1e-12:
+		et = 1
 	return (x-m)/et
 def invstandardization (x,m,et):
 	return m + x*et

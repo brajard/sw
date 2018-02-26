@@ -14,8 +14,11 @@ except:
 
 from keras.optimizers import SGD
 # Load data
-Xfile = '../data/app-uparam/data_X.npy'
-yfile = '../data/app-uparam/data_y.npy'
+
+param = 'v'
+
+Xfile = '../data/app-'+ param + 'param/data_X.npy'
+yfile = '../data/app-'+ param + 'param/data_y.npy'
 
 X = np.load(Xfile)
 y = np.load(yfile)
@@ -57,5 +60,5 @@ y_predict = nn.predict(X_test)
 if PLOT:
 	plt.plot(y_test,y_predict,'.')
 	plt.show()
-nn.save('../data/model_upar.pkl')
+nn.save('../data/model_'+param+'par.pkl')
 
