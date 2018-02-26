@@ -4,6 +4,8 @@ import xarray as xr
 import os
 from os.path import join,isdir
 from shalw import SWmodel
+import scipy.stats as st
+
 try:
 	import matplotlib.pyplot as plt
 
@@ -195,6 +197,16 @@ class mydata:
 	@property
 	def outfield( self ):
 		return self._outfield
+
+def gkern(kernlen=7, nsig=3):
+    """Returns a 2D Gaussian kernel array."""
+
+    interval = (2*nsig+1.)/(kernlen)
+    x = np.linspace(-nsig-interval/2., nsig+interval/2., kernlen+1)
+    kern1d = np.diff(st.norm.cdf(x))
+    kernel_raw = np.sqrt(np.outer(kern1d, kern1d))
+    kernel = kernel_raw/kernel_raw.sum()
+    return kernel
 
 if __name__ == "__main__":
 	appfile = '../data/base_10years.nc'
