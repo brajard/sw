@@ -25,6 +25,7 @@ if __name__=="__main__":
 	rfile_hr = '../../data/restart_10years_hr.nc'
 	rfile_mr = '../../data/restart_10years_mr.nc'
 	files2run = {rfile_lr,rfile_hr,rfile_mr}
+	#files2run = {rfile_mr}
 
 	# First Make restart if it does not exist
 	for rfile in files2run:
@@ -41,10 +42,10 @@ if __name__=="__main__":
 				fact = 2
 				outname = '../../data/restartrun_10years_mr.nc'
 			SW = SWmodel(nx = 40*fact, ny = 40*fact, dx = 40e3//fact, dy = 40e3//fact,
-			nu = 1.44/fact, dt = 3600//fact)
+			nu = 2/fact, dt = 3600/fact)
 			SW.initstate_cst(0, 0, 0)
 			endtime = (fact*24) * 30 * 12 * 10 #10 years of spinup
-			SW.save(time=np.arange(0, endtime, (fact*24)*30), name=outname) #monthly
+			SW.save(time=np.arange(0, endtime, (fact*24)*15), name=outname) #twice a month
 
 			#run the model
 			for i in tqdm(range(endtime)):
@@ -53,7 +54,7 @@ if __name__=="__main__":
 			#Save the restart
 			SW.save_rst(rfile)
 
-	if FALSE:
+	if False:
 		ds = xr.open_dataset('../../data/restartrun_10years_hr.nc')
 		block_shape = (4, 4)
 		spar = {'hphy','uphy','vphy'}
