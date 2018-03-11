@@ -26,6 +26,7 @@ if __name__=="__main__":
 	rfile_mr = '../../data/restart_20years_mr.nc'
 	files2run = {rfile_lr,rfile_hr,rfile_mr}
 	files2run = { rfile_lr}
+
 	# First Make restart if it does not exist
 	for rfile in files2run:
 		if not os.path.isfile(rfile) or rewrite:
@@ -45,6 +46,7 @@ if __name__=="__main__":
 			SW.initstate_cst(0, 0, 0)
 			endtime = (fact*24) * 30 * 12 * 20 #10 years of spinup
 			SW.save(time=np.arange(0, endtime, (fact*24)*30), name=outname) #monthly
+
 
 			#run the model
 			for i in tqdm(range(endtime)):
