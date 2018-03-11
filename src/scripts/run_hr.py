@@ -19,31 +19,31 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 from skimage.util import view_as_blocks
 
 if __name__=="__main__":
+	rewrite = True
 
-
-	rfile_lr = '../../data/restart_10years_lr.nc'
-	rfile_hr = '../../data/restart_10years_hr.nc'
-	rfile_mr = '../../data/restart_10years_mr.nc'
+	rfile_lr = '../../data/restart_20years_lr.nc'
+	rfile_hr = '../../data/restart_20years_hr.nc'
+	rfile_mr = '../../data/restart_20years_mr.nc'
 	files2run = {rfile_lr,rfile_hr,rfile_mr}
-
+	files2run = { rfile_lr}
 	# First Make restart if it does not exist
 	for rfile in files2run:
-		if not os.path.isfile(rfile):
+		if not os.path.isfile(rfile) or rewrite:
 			if '_hr' in rfile:
 				fact = 8
-				outname = '../../data/restartrun_10years_hr.nc'
+				outname = '../../data/restartrun_20years_hr.nc'
 				#SW = SWmodel(nx=320, ny=320, dx=5e3, dy=5e3,nu=0.18,dt=450)
 			elif '_lr' in rfile:
 				fact = 1
-				outname = '../../data/restartrun_10years_lr.nc'
+				outname = '../../data/restartrun_20years_lr.nc'
 				#SW = SWmodel(nx=40,ny=40,dx = 40e3, dy=40e3, nu=1.44, dt=3600//fact)
 			else:
 				fact = 2
-				outname = '../../data/restartrun_10years_mr.nc'
+				outname = '../../data/restartrun_20years_mr.nc'
 			SW = SWmodel(nx = 40*fact, ny = 40*fact, dx = 40e3//fact, dy = 40e3//fact,
-			nu = 1.44/fact, dt = 3600//fact)
+			nu = 1.44/fact, dt = 3600//fact, alpha=0.025)
 			SW.initstate_cst(0, 0, 0)
-			endtime = (fact*24) * 30 * 12 * 10 #10 years of spinup
+			endtime = (fact*24) * 30 * 12 * 20 #10 years of spinup
 			SW.save(time=np.arange(0, endtime, (fact*24)*30), name=outname) #monthly
 
 			#run the model
@@ -53,7 +53,7 @@ if __name__=="__main__":
 			#Save the restart
 			SW.save_rst(rfile)
 
-	if FALSE:
+	if False:
 		ds = xr.open_dataset('../../data/restartrun_10years_hr.nc')
 		block_shape = (4, 4)
 		spar = {'hphy','uphy','vphy'}

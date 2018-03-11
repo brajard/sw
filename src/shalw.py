@@ -191,8 +191,10 @@ class SWmodel:
 		self.set_state('vor',vor)
 		#Copy to unbiased the mean computation in LAMU and LAMV
 		#other solution: vor = 0 ?????
-		self._dstate['vor'][:,type(self)._nedge-1] = self._dstate['vor'][:,type(self)._nedge]
-		self._dstate['vor'][self._endy,:] = self._dstate['vor'][self._endy-1,:]
+
+		#self._dstate['vor'][:,type(self)._nedge-1] = self._dstate['vor'][:,type(self)._nedge]
+		#self._dstate['vor'][self._endy,:] = self._dstate['vor'][self._endy-1,:]
+
 
 	def LAMV(self):
 		vpre = self._dstate['vpre']
@@ -306,7 +308,9 @@ class SWmodel:
 					print('finish save ' + dsave['name'])
 				dsave['iter'] = None
 				ds = xr.Dataset (dsave['dset'],\
-				coords = {'y':self.y, 'x':self.x, 'time':dsave['time']})
+				coords = {'y':self.y, 'x':self.x, 'time':dsave['time']},
+				attrs=self.get_params())
+
 				ds.to_netcdf(dsave['name'])
 
 
