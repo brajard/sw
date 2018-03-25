@@ -12,8 +12,8 @@ try:
 except:
 	PLOT = False
 
-rfile = '../data/restart_10years.nc'
-outfile = '../data/base_10years.nc'
+rfile = '../data/restart_10years_mr.nc'
+outfile = '../data/base_10years_mr.nc'
 testfile = '../data/test_image.nc'
 para = {'ufil', 'vfil', 'hfil',
 	'hphy', 'uphy', 'vphy',
