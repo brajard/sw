@@ -96,7 +96,7 @@ class mydata:
 			self._SW = SW
 		if isinstance(fname,str):
 			self._fname = fname
-			self._data = xr.open_dataset(self.fname)
+			self._data = xr.open_dataset(self._fname)
 		else:
 			self._fname = ''
 			self._data = fname
@@ -119,6 +119,30 @@ class mydata:
 		self._indouty = None
 		self._indint = None
 		self._indoutt = None
+
+	def make_base_im (self):
+		""""make base without cut into small images"""
+		atin = np.array([tin for tin,tout in self.t])
+		atout = np.array([tout for tin,tout in self.t])
+		#Liste of indata
+		Lin = [ (self.data[f].sel(time=atin).values) for f in self.infield]
+		Lforc = []
+		ny = self.data.y.size
+		nx = self.data.x.size
+		for name in self.forcfield:
+			tmp = getattr(self._SW,name)
+			#test if it is constant in time
+			if len(tmp.shape) == 2:
+				tmp = np.tile(tmp[np.newaxis,:,:],(len(atin),1,1))
+			Lforc.append(tmp)
+		self._X = np.stack(Lin+Lforc,axis=-1)
+		self._y = self.data[self.outfield].sel(time=atout).values[:,:,:,np.newaxis]
+		self._indinx = self.data.x
+		self._indiny = self.data.y
+		self._indoutx = self.data.x
+		self._indouty = self.data.y
+		self._indint = atin
+		self._indoutt = atout
 
 	def make_base( self ):
 		ny, nx = len(self.data.y), len(self.data.x)

@@ -55,6 +55,7 @@ class mymodel:
 				self._moyX = self._moyX*np.ones(shape=(npar))
 			if not hasattr(self._etX, "__len__"):
 				self._etX = self._etX*np.ones(shape=(npar))
+			npar=self._model.output_shape[-1]
 			if not hasattr(self._moyY, "__len__"):
 				self._moyY = self._moyY * np.ones(shape=(npar))
 			if not hasattr(self._etY, "__len__"):
