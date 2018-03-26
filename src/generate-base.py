@@ -13,7 +13,7 @@ except:
 	PLOT = False
 
 rfile = '../data/restart_10years_mr.nc'
-outfile = '../data/base_10years_mr.nc'
+outfile = '../data/base_40years_mr.nc'
 testfile = '../data/test_image.nc'
 para = {'ufil', 'vfil', 'hfil',
 	'hphy', 'uphy', 'vphy',
@@ -25,7 +25,7 @@ SW.set_time(0)
 
 nseq = 2
 freq = 12*30*1 #1 month
-endtime = 12*30*12*10 #10 years
+endtime = 12*30*12*40 #10 years
 testime = 12*30*10 #one year after test
 # Create time vector
 starts = np.arange(0, endtime, freq)

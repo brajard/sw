@@ -1,4 +1,12 @@
 from datatools import mydata
+#Base for hdyn
+appfile = '../data/base_40years_mr.nc'
+infield = ['hphy','uphy','vphy']
+outfield = 'hdyn'
+app = mydata(appfile,outfield=outfield,infield=infield,forcfield=[],dt=1)
+app.make_base_im()
+app.save_base('../data/app-hdyn-im')
+
 
 #Base for uparam
 appfile = '../data/base_10years_mr.nc'
