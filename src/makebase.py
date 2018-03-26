@@ -17,3 +17,5 @@ outfield = 'vparam'
 app = mydata(appfile,outfield=outfield,infield=infield,forcfield=['tauy'],dt=1)
 app.make_base()
 app.save_base(('../data/app-vparam'))
+app.make_base_im()
+app.save_base('../data/app-vparam-im')

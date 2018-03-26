@@ -49,6 +49,7 @@ class mymodel:
 		self._etY = etY
 		self._fnorm = fnorm
 		self._fdenorm = fdenorm
+		self._history = None
 		if model is not None:
 			npar= self._model.input_shape[-1]
 			if not hasattr(self._moyX, "__len__"):
@@ -67,7 +68,9 @@ class mymodel:
 		npar = X.shape[-1]
 		Xn = normalize(X,self._moyX,self._etX,fnorm=self._fnorm)
 		yn = normalize(y,self._moyY,self._etY,fnorm=self._fnorm)
-		self._model.fit(Xn,yn,**kwargs)
+		history=self._model.fit(Xn,yn,**kwargs)
+		self._history = history.history
+		return history
 
 	def predict (self,X,denorm=True,**kwargs):
 		Xn = normalize(X,self._moyX,self._etX,fnorm=self._fnorm)

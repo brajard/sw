@@ -15,7 +15,7 @@ except:
 from keras.optimizers import SGD
 # Load data
 
-param = 'v'
+param = 'u'
 
 Xfile = '../data/app-'+ param + 'param/data_X.npy'
 yfile = '../data/app-'+ param + 'param/data_y.npy'

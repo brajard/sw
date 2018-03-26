@@ -2,7 +2,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 
 phy = xr.open_dataset('test.nc')
-nn = xr.open_dataset('test2.nc')
+nn = xr.open_dataset('test-nn.nc')
 x, y = 0, 41
 t = 0
 
