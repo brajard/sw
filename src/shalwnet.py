@@ -77,3 +77,53 @@ class SWparnnim(SWmodel):
 	@property
 	def nnvpar( self ):
 		return self._nnvparname
+
+
+class SWparnnhdyn(SWmodel):
+	def __init__ (self, nnupar='',nnvpar='',nnhdyn='',
+			f0=3.5e-5, beta=2.11e-11, gamma=2e-7, gstar=0.02,rho0=1000, H=500, taux0=0.15, tauy0=0, nu=0.72, dt=1800,
+			dx=20e3, dy=20e3, alpha=0.025, nx=80, ny=80 ):
+		SWmodel.__init__(self,f0, beta, gamma, gstar,rho0, H, taux0, tauy0, nu, dt,
+			dx, dy, alpha, nx, ny )
+
+		if isinstance(nnupar, str):
+			self._nnupar = loadmymodel(nnupar)
+			self._nnuparname = nnupar
+		else:
+			self._nnupar = nnupar
+			self._nnuparname = ''
+
+		if isinstance(nnvpar, str):
+			self._nnvpar = loadmymodel(nnvpar)
+			self._nnvparname = nnvpar
+		else:
+			self._nnvpar = nnvpar
+			self._nnvparname = ''
+
+		if isinstance(nnhdyn, str):
+			self._nnhdyn = loadmymodel(nnhdyn)
+			self._nnhdynname = nnhdyn
+		else:
+			self._nnhdyn = nnhdyn
+			self._nnhdynname = ''
+
+
+	def computeuparam( self):
+		x = np.stack((self.upre,self.hpre,self.taux),axis=-1)[np.newaxis,:]
+		self.uparam = self._nnupar.predict(x).squeeze()
+
+	def computevparam( self):
+		x = np.stack((self.vpre,self.hpre,self.tauy),axis=-1)[np.newaxis,:]
+		self.uparam = self._nnvpar.predict(x).squeeze()
+	def computehdyn( self):
+		x = np.stack((self.hpre,self.upre,self.vpre),axis=-1)[np.newaxis,:]
+		self.hdyn = self._nnhdyn.predict(x).squeeze()
+	@property
+	def nnupar( self ):
+		return self._nnuparname
+	@property
+	def nnvpar( self ):
+		return self._nnvparname
+	@property
+	def nnhdyn( self ):
+		return self._nnhdynname

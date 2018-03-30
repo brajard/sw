@@ -1,6 +1,6 @@
 """
-This file makes a simulation over 10 years
-and save a sequence of 10 snapshot every 2 months
+This file makes a simulation over 40 years
+and save a sequence of 2 snapshots every  month
 """
 from shalw import SWmodel
 import numpy as np
@@ -12,7 +12,7 @@ try:
 except:
 	PLOT = False
 
-rfile = '../data/restart_10years_mr.nc'
+rfile = '../data/restart_20years_mr.nc'
 outfile = '../data/base_40years_mr.nc'
 testfile = '../data/test_image.nc'
 para = {'ufil', 'vfil', 'hfil',

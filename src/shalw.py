@@ -108,7 +108,8 @@ class SWmodel:
 		self.precompute()
 
 		#uphy,vphy,hphy
-		self.hdyn = (self.MCU() / self.dx + self.MCV() / self.dy)
+		#self.hdyn = (self.MCU() / self.dx + self.MCV() / self.dy)
+		self.computehdyn()
 		self.hphy = self.hfil - 2 * self.dt * self.hdyn
 
 		self.computeuparam()
@@ -142,6 +143,9 @@ class SWmodel:
 	def computevparam( self ):
 		self.vparam = - self.DISV() + self.DIFV()+ self.TAUY()
 		self.vparam[0, :] = 0
+
+	def computehdyn( self):
+		self.hdyn = (self.MCU() / self.dx + self.MCV() / self.dy)
 
 	def precompute( self ):
 		self.VOR()
