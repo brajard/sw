@@ -69,7 +69,7 @@ class SWparnnim(SWmodel):
 
 	def computevparam( self):
 		x = np.stack((self.vpre,self.hpre,self.tauy),axis=-1)[np.newaxis,:]
-		self.uparam = self._nnvpar.predict(x).squeeze()
+		self.vparam = self._nnvpar.predict(x).squeeze()
 
 	@property
 	def nnupar( self ):
@@ -114,10 +114,12 @@ class SWparnnhdyn(SWmodel):
 
 	def computevparam( self):
 		x = np.stack((self.vpre,self.hpre,self.tauy),axis=-1)[np.newaxis,:]
-		self.uparam = self._nnvpar.predict(x).squeeze()
+		self.vparam = self._nnvpar.predict(x).squeeze()
 	def computehdyn( self):
 		x = np.stack((self.hpre,self.upre,self.vpre),axis=-1)[np.newaxis,:]
-		self.hdyn = self._nnhdyn.predict(x).squeeze()
+		y = self._nnhdyn.predict(x).squeeze()
+		self.hdyn = y #- np.sum(y.ravel())
+
 	@property
 	def nnupar( self ):
 		return self._nnuparname

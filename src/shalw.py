@@ -299,17 +299,17 @@ class SWmodel:
 		for dsave in self._save:
 			if dsave['iter'] is None and self.t == dsave['time'][0]:
 				if self._verbose>1:
-					print('Init save ' + dsave['name'])
+					print('Init save ' + dsave['name'] + ' time ' + str(self.t))
 				dsave['iter'] = 0
 			if dsave['iter'] is not None and dsave['time'][dsave['iter']] == self.t:
 				if self._verbose>1:
-					print('update save ' + dsave['name'])
+					print('update save ' + dsave['name'] + ' time ' + str(self.t))
 				for var,d in dsave['dset'].items():
 					d[1][dsave['iter']] = self.get_state(var)
 				dsave['iter'] += 1
 			if dsave['iter'] == len(dsave['time']):
 				if self._verbose>1:
-					print('finish save ' + dsave['name'])
+					print('finish save ' + dsave['name'] + ' time ' + str(self.t))
 				dsave['iter'] = None
 				ds = xr.Dataset (dsave['dset'],\
 				coords = {'y':self.y, 'x':self.x, 'time':dsave['time']},
