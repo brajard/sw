@@ -23,9 +23,9 @@ from keras.optimizers import SGD
 
 
 param = 'hdyn'
-netname = 'nn-' +param +'param-amsgrad-long2'
+netname = 'nn-' +param +'param-amsgrad'
 
-fgnet = 'nn-' +param +'param-amsgrad-long'
+#fgnet = 'nn-' +param +'param-amsgrad-long'
 
 outdir = '../data'
 Xfile = '../data/app-'+ param + '-im/data_X.npy'
@@ -44,7 +44,7 @@ if 'fgnet' in locals():
 else:
 #Model definition
         model = Sequential()
-        model.add(Conv2D(32, (1, 1), activation='relu',
+        model.add(Conv2D(64, (1, 1), activation='relu',
                          input_shape=(ny,nx,npar)))
         model.add(Conv2D(64, (3, 3), activation='relu',
                          padding='same'))
@@ -52,6 +52,8 @@ else:
 	#)
         #model.add(Dropout(0.2))
         model.add(Conv2D(32, (1, 1), activation='relu'))
+        model.add(Conv2D(32, (1, 1), activation='relu'))
+
         model.add(Conv2D(1, (1, 1), activation='linear'))
         adam = optimizers.Adam(amsgrad=True)
         model.compile(loss='mean_squared_error', optimizer=adam)
@@ -61,11 +63,13 @@ else:
         #Xtest_n = np.zeros_like(X_test)
         moy = np.zeros(npar)
         et = np.zeros(npar)
+        perturb = np.zeros_like(X_train)
         for j in range(npar):
                 moy[j] = np.mean(X_train[:,:,:,j].ravel())
                 et[j] = np.std(X_train[:,:,:,j].ravel())
                 #	Xtrain_n[:,:,:,j] = (X_train[:,:,:,j] - moy[j])/et[j]
                 #	Xtest_n[:,:,:,j] = (X_test[:,:,:,j] - moy[j])/et[j]
+                perturb [:,:,:,j] = np.random.normal(0,scale=et[j], size = (X_train.shape[0],ny,nx))
         moy_y = np.mean(y_train.ravel())
         et_y = np.std(y_train.ravel())
         #ytrain_n = (y_train - moy_y)/et_y
@@ -73,7 +77,7 @@ else:
         nn = mymodel(model,moyX=moy,etX=et,moyY=moy_y,etY=et_y)
         
 #Training
-nn.fit(X_train, y_train, epochs=1000, batch_size=16,validation_split=0.1)
+nn.fit(X_train+perturb/100, y_train, epochs=2, batch_size=16,validation_split=0.1)
 
 y_predict = nn.predict(X_test)
 if not isdir(join(outdir, netname)):
