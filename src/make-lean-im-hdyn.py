@@ -23,11 +23,12 @@ from keras.optimizers import SGD
 
 
 param = 'hdyn'
+netname = 'nn-'+param+'-prod'
 #netname = 'nn-' +param +'-stoc'
-netname = 'nn-' +param +'-dropout2'
+#netname = 'nn-' +param +'-dropout2'
 
 #fgnet = 'nn-' +param +'param-amsgrad-long'
-fgnet = 'nn-' +param +'-dropout'
+#fgnet = 'nn-' +param +'-dropout'
 outdir = '../data'
 Xfile = '../data/app-'+ param + '-im/data_X.npy'
 yfile = '../data/app-'+ param + '-im/data_y.npy'
@@ -50,7 +51,6 @@ X_train, X_test, y_train, y_test = \
 
 
 
-
 nt,ny,nx,npar = X.shape
 
 if 'fgnet' in locals():
@@ -66,7 +66,7 @@ else:
                          padding='same'))
 	#kernel_regularizer=regularizers.l1(0.001),
 	#)
-        model.add(Dropout(0.1))
+     #   model.add(Dropout(0.1))
         model.add(Conv2D(32, (1, 1), activation='relu'))
         model.add(Conv2D(32, (1, 1), activation='relu'))
 
@@ -93,7 +93,7 @@ else:
         nn = mymodel(model,moyX=moy,etX=et,moyY=moy_y,etY=et_y)
         
 #Training
-nn.fit(X_train+0*perturb/1000, y_train, epochs=1000, batch_size=1,validation_split=0.1)
+nn.fit(X_train+0*perturb/1000, y_train, epochs=2, batch_size=1,validation_split=0.1)
 
 y_predict = nn.predict(X_test)
 if not isdir(join(outdir, netname)):
