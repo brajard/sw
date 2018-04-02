@@ -23,10 +23,11 @@ from keras.optimizers import SGD
 
 
 param = 'hdyn'
-netname = 'nn-' +param +'param-amsgrad'
+#netname = 'nn-' +param +'-stoc'
+netname = 'nn-' +param +'-dropout2'
 
 #fgnet = 'nn-' +param +'param-amsgrad-long'
-
+fgnet = 'nn-' +param +'-dropout'
 outdir = '../data'
 Xfile = '../data/app-'+ param + '-im/data_X.npy'
 yfile = '../data/app-'+ param + '-im/data_y.npy'
@@ -54,16 +55,18 @@ nt,ny,nx,npar = X.shape
 
 if 'fgnet' in locals():
         nn = loadmymodel(join(outdir,fgnet,'model_'+param+'-im.pkl'))
+        perturb = 0
 else:
 #Model definition
         model = Sequential()
         model.add(Conv2D(64, (1, 1), activation='relu',
                          input_shape=(ny,nx,npar)))
+        #model.add(Dropout(0.1))
         model.add(Conv2D(64, (3, 3), activation='relu',
                          padding='same'))
 	#kernel_regularizer=regularizers.l1(0.001),
 	#)
-        #model.add(Dropout(0.2))
+        model.add(Dropout(0.1))
         model.add(Conv2D(32, (1, 1), activation='relu'))
         model.add(Conv2D(32, (1, 1), activation='relu'))
 
@@ -90,11 +93,12 @@ else:
         nn = mymodel(model,moyX=moy,etX=et,moyY=moy_y,etY=et_y)
         
 #Training
-nn.fit(X_train+perturb/100, y_train, epochs=2, batch_size=16,validation_split=0.1)
+nn.fit(X_train+0*perturb/1000, y_train, epochs=1000, batch_size=1,validation_split=0.1)
 
 y_predict = nn.predict(X_test)
 if not isdir(join(outdir, netname)):
 	os.mkdir(join(outdir, netname))
+nn.save(join(outdir,netname,'model_'+param+'-im.pkl'))
 if PLOT:
 	plt.plot(y_test.ravel(),y_predict.ravel(),'.')
 	plt.plot([min(y_test.ravel())]*2,[max(y_test.ravel())]*2,'-r')
@@ -104,5 +108,5 @@ if PLOT:
 	plt.semilogy(nn._history['val_loss'], color='black')
 	plt.savefig(join(outdir, netname, 'history.png'))
 	plt.close("all")
-nn.save(join(outdir,netname,'model_'+param+'-im.pkl'))
+
 
