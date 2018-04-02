@@ -34,8 +34,21 @@ yfile = '../data/app-'+ param + '-im/data_y.npy'
 X = np.load(Xfile)
 y = np.load(yfile)
 
+npar = X.shape[-1]
+nprod = (npar)*(npar-1)//2
+Xp = np.empty(shape=(X.shape[:-1])+(nprod,))
+k=0
+for i in range(npar):
+	for j in range(i+1,npar):
+		Xp[:,:,:,k] = X[:,:,:,i]*X[:,:,:,j]
+		k=k+1
+X = np.concatenate((X,Xp),axis=3)
+
 X_train, X_test, y_train, y_test = \
 	train_test_split(X, y, test_size=0.1)
+
+
+
 
 nt,ny,nx,npar = X.shape
 
