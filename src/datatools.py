@@ -232,6 +232,17 @@ def gkern(kernlen=7, nsig=3):
     kernel = kernel_raw/kernel_raw.sum()
     return kernel
 
+def make_H(mask1D):
+	n = mask1D.shape[0]
+	p = np.sum(mask1D)
+	H = np.zeros(shape=(p, n))
+	j = 0
+	for i in range(n):
+		if mask1D[i]:
+			H[j, i] = 1
+			j = j + 1
+	return H
+
 if __name__ == "__main__":
 	appfile = '../data/base_10years.nc'
 	#data = xr.open_dataset(appfile)
