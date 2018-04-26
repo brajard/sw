@@ -68,12 +68,14 @@ class SWparnnim(SWmodel):
 		x = np.stack((self.upre,self.hpre,self.taux),axis=-1)[np.newaxis,:]
 		y = self._nnupar.predict(x).squeeze()
 		self.uparam = y
+		self.uparam[:, -1] = 0
 		#self.uparam = gaussian_filter(y,(1,1))
 
 	def computevparam( self):
 		x = np.stack((self.vpre,self.hpre,self.tauy),axis=-1)[np.newaxis,:]
 		y = self._nnvpar.predict(x).squeeze()
 		self.vparam = y
+		self.vparam[0, :] = 0
 		#self.vparam = gaussian_filter(y,(1,1))
 
 	def computehdyn( self):
@@ -130,7 +132,7 @@ class SWparnnhdyn(SWmodel):
 	def computehdyn( self):
 		x = np.stack((self.hpre,self.upre,self.vpre),axis=-1)[np.newaxis,:]
 		self.hdyn = self._nnhdyn.predict(x).squeeze()
-		#self.hdyn = gaussian_filter(self.hdyn,(1,1)) #- np.sum(y.ravel())
+		self.hdyn = gaussian_filter(self.hdyn,(1,1)) #- np.sum(y.ravel())
 		self.hdyn = self.hdyn - np.mean(self.hdyn.ravel())
 	@property
 	def nnupar( self ):
