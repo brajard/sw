@@ -119,8 +119,10 @@ class SWmodel:
 		#self.uforc[:,-1] = 0
 		self.uphy = self.ufil + 2*self.dt*(
 			self.udyn + self.uparam )
-		self.uphy[:,-1] = 0
-		self.uphy[:,0]  = 0
+
+		#self.uphy[:,-1] = 0
+		#self.uphy[:,0]  = 0
+
 		self.computevparam()
 		self.vdyn = -self.LAMU()-self.GRADY()/self.dy
 		#self.vforc = self.TAUY()
@@ -128,8 +130,8 @@ class SWmodel:
 		#self.vforc[0,:] = 0
 		self.vphy = self.vfil + 2*self.dt*(
 			self.vdyn + self.vparam )
-		self.vphy[0, :] = 0
-		self.vphy[-1,:] = 0
+
+		#self.vphy[-1,:] = 0
 		#self.vphy[0,:] = 0
 
 
@@ -141,12 +143,12 @@ class SWmodel:
 
 	def computeuparam( self ):
 		self.uparam = - self.DISU() + self.DIFU() + self.TAUX()
-		#self.uparam[:, -1] = 0
+		self.uparam[:, -1] = 0
 		#self.uparam[:, 0] = 0
 
 	def computevparam( self ):
 		self.vparam = - self.DISV() + self.DIFV()+ self.TAUY()
-		#self.uparam[0, :] = 0
+		self.vparam[0, :] = 0
 		#self.uparam[-1, :] = 0
 
 	def computehdyn( self):

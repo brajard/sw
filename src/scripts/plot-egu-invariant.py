@@ -1,10 +1,8 @@
 import sys
 sys.path.append('..')
-from shalw import SWmodel
 import os
 import numpy as np
 import xarray as xr
-from tqdm import tqdm
 try:
     import matplotlib.pyplot as plt
     PLOT = True
@@ -12,10 +10,12 @@ except:
     PLOT = False
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
-figdir = '../../data/figs'
+figdir = '../../data/egu'
 
-fname0 = '../test0.nc'
-fname1 = '../test1.nc'
+fname0 = '../../data/egu/test-00-new.nc'
+fname1 = '../../data/egu/test-nn-new.nc'
+
+suf = 'new'
 
 dsdr=dict()
 dsdr[0] = xr.open_dataset(fname0)
@@ -23,7 +23,7 @@ dsdr[1] = xr.open_dataset(fname1)
 #dsdr[0]['time'] = dsdr[0].time * dsdr[0].dt / (3600 * 24)  # time in days
 #dsdr[1]['time'] = dsdr[1].time * dsdr[1].dt / (3600 * 24)  # time in days
 
-mtime = 20
+mtime = dsdr[0].time[-1]+1
 dsd = dict()
 dsd[0] = dsdr[0].sel(time=dsdr[0].time<mtime)
 dsd[1] = dsdr[1].sel(time=dsdr[1].time<mtime)
@@ -51,13 +51,18 @@ def potential_vor(uphy,vphy,hphy,dx,dy,H,f0,beta,y,yc=0):
     potential_vor = (zheta + coriolis).values/(hphy+H)
     return potential_vor.stack(geo=('x','y')).mean(axis=1)
 
-lab = {0:'num. model',1:'net. model'}
+lab = {0:'True model',1:'neural net. model'}
 
 names = {'EC','EP','PV'}
+ylabel = {'EC':'kinetic energy','EP':'potential energy','PV':'potential vorticity'}
 fig=dict()
 ax = dict()
+fig0 = dict()
+ax0 = dict()
 for k in names:
     fig[k],ax[k] = plt.subplots()
+    #for plotting numerical model alone:
+    fig0[k],ax0[k] = plt.subplots()
 
 for k,ds in dsd.items():
     ds['time'] = ds.time * ds.dt / (3600 * 24)  # time in days
@@ -68,62 +73,38 @@ for k,ds in dsd.items():
     Ec.plot(ax=ax['EC'],label=lab[k])
     Ep.plot(ax=ax['EP'],label=lab[k])
     PV.plot(ax=ax['PV'],label=lab[k])
+    if k==0: #plot numerical model alone
+        Ec.plot(ax=ax0['EC'],label=lab[k])
+        Ep.plot(ax=ax0['EP'],label=lab[k])
+        PV.plot(ax=ax0['PV'],label=lab[k])
 
 for k in names:
-    ax[k].set_ylabel(k)
+    ax[k].set_ylabel(ylabel[k],fontsize=20)
     ax[k].set_xlabel('time[days]')
     ax[k].legend()
-    fig[k].savefig(os.path.join(figdir,'Evol3-'+k+'.png'))
-    plt.show()
+    ax0[k].set_ylabel(ylabel[k],fontsize=20)
+    ax0[k].set_xlabel('time[days]')
+    fig[k].savefig(os.path.join(figdir,'evol'+suf+'-'+k+'.png'))
+    fig0[k].savefig(os.path.join(figdir, 'evol-0-' + suf + '-' + k + '.png'))
 
-figu,axu = plt.subplots(ncols=2)
-dsd[0].uparam[1].plot(ax=axu[0])
-axu[0].set_title('upar num. mod')
-axu[0].axis('off')
-(dsd[1].uparam[1]-dsd[0].uparam[1]).plot(ax=axu[1])
-axu[1].set_title('upar net - num')
-axu[1].axis('off')
 
-figu.savefig(os.path.join(figdir,'uparam3.png'))
-
-figv,axv = plt.subplots(ncols=2)
-dsd[0].vparam[1].plot(ax=axv[0])
-axv[0].set_title('vpar num. mod')
-axv[0].axis('off')
-(dsd[1].vparam[1]-dsd[0].vparam[1]).plot(ax=axv[1])
-axv[1].set_title('vpar net - num')
-axv[1].axis('off')
-
-fighd,axhd = plt.subplots(ncols=3)
-dsd[0].hdyn[1].plot(ax=axhd[0])
-axhd[0].set_title('hdyn num. mod')
-axhd[0].axis('off')
-dsd[1].hdyn[1].plot(ax=axhd[1])
-axhd[0].set_title('hdyn net mod')
-axhd[0].axis('off')
-(dsd[1].hdyn[1]-dsd[0].hdyn[1]).plot(ax=axhd[2])
-axhd[1].set_title('vpar net - num')
-axhd[1].axis('off')
-
-fighd.savefig(os.path.join(figdir,'hdyn-t1.png'))
-plt.close(fighd)
-
-fighd,axhd = plt.subplots(ncols=3)
-dsdr[0].hdyn[20].plot(ax=axhd[0])
-axhd[0].set_title('hdyn num. mod')
-axhd[0].axis('off')
-dsdr[1].hdyn[20].plot(ax=axhd[1])
-axhd[0].set_title('hdyn net mod')
-axhd[0].axis('off')
-(dsdr[1].hdyn[20]-dsdr[0].hdyn[20]).plot(ax=axhd[2])
-axhd[1].set_title('vpar net - num')
-axhd[1].axis('off')
-
-fighd.savefig(os.path.join(figdir,'hdyn-t20.png'))
 
 figh, axh = plt.subplots()
-dsd[0].hphy.stack(geo=('x','y')).mean(axis=1).plot(ax=axh,label=lab[0]);
-dsd[1].hphy.stack(geo=('x','y')).mean(axis=1).plot(ax=axh,label=lab[1]);
+dsd[0].hphy.stack(geo=('x','y')).mean(axis=1).plot(ax=axh,label=lab[0])
+dsd[1].hphy.stack(geo=('x','y')).mean(axis=1).plot(ax=axh,label=lab[1])
 axh.set_xlabel('time[days]')
+axh.set_ylabel('height',fontsize=20)
+axh.legend()
+figh.savefig(os.path.join(figdir,'evol'+suf+'-h.png'))
 
-figh.savefig(os.path.join(figdir,'evol-h3.png'))
+vlim = {'hphy':-150,'uphy':0.4,'vphy':0.6}
+
+for k,ds in dsd.items():
+    svar = {'hphy','uphy','vphy'}
+    figm=dict()
+    axm=dict()
+    for v in svar:
+        figm[v], axm[v] = plt.subplots()
+        ds[v].mean(dim='time').plot(ax=axm[v],vmin=-vlim[v],vmax=vlim[v])
+        axm[v].axis('off')
+        figm[v].savefig(os.path.join(figdir,'mean'+suf+'-'+str(v)+str(k)+'.png'))

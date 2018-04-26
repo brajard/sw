@@ -11,7 +11,7 @@ try:
 except:
 	PLOT = False
 
-
+PLOT = False
 rfile = '../data/restart_10years.nc'
 nnufile = '../data/nn-uparam-im/model_upar-im.pkl'
 nnvfile = '../data/nn-vparam-im/model_vpar-im.pkl'
@@ -26,13 +26,13 @@ SW0.inistate_rst(rfile)
 SW0.set_time(0)
 # time of the spinup
 # endtime = 12*30*12*10 #10 years
-endtime = 48 * 30 * 12 * 10
+endtime = 48 * 30 * 12 * 15
 #endtime = 48 * 30 * 12 *10
 # Declare to save all phy parameters (default) every 12*30 time step(1 month)
 # 10000 is approximatively 13 months
 para = { 'hphy', 'hdyn', 'uphy', 'udyn', 'uparam','vparam','vphy' }
-SW.save(time=np.arange(0, endtime,48*7 ), para=para, name='test-nn2.nc')
-SW0.save(time=np.arange(0, endtime,48*7 ), para=para, name='test-0.nc')
+SW.save(time=np.arange(0, endtime,48*7 ), para=para, name='../data/egu/test-nn-new.nc')
+SW0.save(time=np.arange(0, endtime,48*7 ), para=para, name='../data/egu/test-00-new.nc')
 
 # Run the model
 start = time.time()
