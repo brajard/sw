@@ -113,21 +113,13 @@ class SWmodel:
 		self.hphy = self.hfil - 2 * self.dt * self.hdyn
 
 		self.computeuparam()
-		self.udyn = self.LAMV()-self.GRADX()/self.dx
-		#self.uforc =  self.TAUX()
-		self.udyn[:,-1] = 0
-		#self.uforc[:,-1] = 0
+		self.computeudyn()
 		self.uphy = self.ufil + 2*self.dt*(
 			self.udyn + self.uparam )
 
-		#self.uphy[:,-1] = 0
-		#self.uphy[:,0]  = 0
 
 		self.computevparam()
-		self.vdyn = -self.LAMU()-self.GRADY()/self.dy
-		#self.vforc = self.TAUY()
-		self.vdyn[0,:] = 0
-		#self.vforc[0,:] = 0
+		self.computevdyn()
 		self.vphy = self.vfil + 2*self.dt*(
 			self.vdyn + self.vparam )
 
@@ -140,6 +132,14 @@ class SWmodel:
 		self.vfil = self.vpre + self.alpha*(self.vfil - 2 * self.vpre + self.vphy)
 		self.hfil = self.hpre + self.alpha*(self.hfil - 2 * self.hpre + self.hphy)
 		self._t += 1
+
+	def computeudyn( self ):
+		self.udyn = self.LAMV()-self.GRADX()/self.dx
+		self.udyn[:,-1] = 0
+
+	def computevdyn( self ):
+		self.vdyn = -self.LAMU() - self.GRADY() / self.dy
+		self.vdyn[0, :] = 0
 
 	def computeuparam( self ):
 		self.uparam = - self.DISU() + self.DIFU() + self.TAUX()
@@ -718,6 +718,32 @@ class SWmodel:
 			valid_params[key].set_params(**sub_params)
 
 		return self
+
+class SWparnlin(SWmodel):
+	def __init__ ( self, f0=3.5e-5, beta=2.11e-11, gamma=2e-7, gstar=0.02,rho0=1000, H=500, taux0=0.15, tauy0=0, nu=0.72, dt=1800,
+			dx=20e3, dy=20e3, alpha=0.025, nx=80, ny=80 ):
+		SWmodel.__init__(self,f0, beta, gamma, gstar,rho0, H, taux0, tauy0, nu, dt,
+			dx, dy, alpha, nx, ny )
+
+	def DIFU(self):
+		upre = self._dstate['upre']
+		DX = (upre[self.ind((0,1))]+
+		      upre[self.ind((0,-1))]-
+		      2*upre[self.ind()])/(self.dx**2)
+		DY = (upre[self.ind((1,0))]+
+		      upre[self.ind((-1,0))]-
+		      2*upre[self.ind()])/(self.dy**2)
+		return self.nu*(DX+DY)
+	def DIFV(self):
+		vpre = self._dstate['vpre']
+		DX = (vpre[self.ind((0,1))]+
+		      vpre[self.ind((0,-1))]-
+		      2*vpre[self.ind()])/(self.dx**2)
+		DY = (vpre[self.ind((1,0))]+
+		      vpre[self.ind((-1,0))]-
+		      2*vpre[self.ind()])/(self.dy**2)
+		return self.nu*(DX+DY)
+
 
 if __name__ == "__main__":
 	SW = SWmodel(nx=80,ny=80)
