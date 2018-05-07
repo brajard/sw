@@ -3,12 +3,14 @@
 from shalw import SWmodel
 import numpy as np
 import xarray as xr
+from tqdm import tqdm
+
 try:
 	import matplotlib.pyplot as plt
 	PLOT = True
 except:
 	PLOT = False
-endtime = 12*30*12*20 #86400 : 20 years
+endtime = 48*30*12*5 #86400 : 5 years
 outname = '../data/restartrun.nc'
 
 
@@ -20,7 +22,7 @@ SW.initstate_cst(0,0,0)
 SW.save(time=np.arange(0,endtime,12*15),name=outname)
 
 #run the model
-for i in range(endtime):
+for i in tqdm(range(endtime)):
 	SW.next()
 
 #Save the restart

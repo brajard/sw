@@ -2,6 +2,7 @@ from shalw import SWmodel
 from modeltools import loadmymodel
 from datatools import MakeSmallImages, MakeBigImage,  MakeSmallImages_ind
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 class SWparnn(SWmodel):
 	def __init__ (self, nnupar,nnvpar,nout=(1,1),delta=(1,1),
@@ -65,11 +66,21 @@ class SWparnnim(SWmodel):
 
 	def computeuparam( self):
 		x = np.stack((self.upre,self.hpre,self.taux),axis=-1)[np.newaxis,:]
-		self.uparam = self._nnupar.predict(x).squeeze()
+		y = self._nnupar.predict(x).squeeze()
+		self.uparam = y
+		self.uparam[:, -1] = 0
+		#self.uparam = gaussian_filter(y,(1,1))
 
 	def computevparam( self):
 		x = np.stack((self.vpre,self.hpre,self.tauy),axis=-1)[np.newaxis,:]
-		self.vparam = self._nnvpar.predict(x).squeeze()
+		y = self._nnvpar.predict(x).squeeze()
+		self.vparam = y
+		self.vparam[0, :] = 0
+		#self.vparam = gaussian_filter(y,(1,1))
+
+	def computehdyn( self):
+		self.hdyn = (self.MCU() / self.dx + self.MCV() / self.dy)
+		#self.hdyn = self.hdyn - np.mean(self.hdyn.ravel())
 
 	@property
 	def nnupar( self ):
@@ -111,15 +122,18 @@ class SWparnnhdyn(SWmodel):
 	def computeuparam( self):
 		x = np.stack((self.upre,self.hpre,self.taux),axis=-1)[np.newaxis,:]
 		self.uparam = self._nnupar.predict(x).squeeze()
+		self.uparam[:, -1] = 0
 
 	def computevparam( self):
 		x = np.stack((self.vpre,self.hpre,self.tauy),axis=-1)[np.newaxis,:]
 		self.vparam = self._nnvpar.predict(x).squeeze()
+		self.vparam[0, :] = 0
+
 	def computehdyn( self):
 		x = np.stack((self.hpre,self.upre,self.vpre),axis=-1)[np.newaxis,:]
-		y = self._nnhdyn.predict(x).squeeze()
-		self.hdyn = y #- np.sum(y.ravel())
-
+		self.hdyn = self._nnhdyn.predict(x).squeeze()
+		self.hdyn = gaussian_filter(self.hdyn,(1,1)) #- np.sum(y.ravel())
+		self.hdyn = self.hdyn - np.mean(self.hdyn.ravel())
 	@property
 	def nnupar( self ):
 		return self._nnuparname
