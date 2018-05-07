@@ -23,11 +23,12 @@ from keras.optimizers import SGD
 
 
 param = 'hdyn'
-netname = 'nn-'+param+'-prod'
+#netname = 'nn-'+param+'-prod'
+netname = 'nn-' +param +'param-amsgrad-long6'
 #netname = 'nn-' +param +'-stoc'
 #netname = 'nn-' +param +'-dropout2'
 
-#fgnet = 'nn-' +param +'param-amsgrad-long'
+fgnet = 'nn-' +param +'param-amsgrad-long5'
 #fgnet = 'nn-' +param +'-dropout'
 outdir = '../data'
 Xfile = '../data/app-'+ param + '-im/data_X.npy'
@@ -44,7 +45,8 @@ for i in range(npar):
 	for j in range(i+1,npar):
 		Xp[:,:,:,k] = X[:,:,:,i]*X[:,:,:,j]
 		k=k+1
-X = np.concatenate((X,Xp),axis=3)
+if 'prod' in netname:
+        X = np.concatenate((X,Xp),axis=3)
 
 X_train, X_test, y_train, y_test = \
 	train_test_split(X, y, test_size=0.1)
@@ -59,15 +61,15 @@ if 'fgnet' in locals():
 else:
 #Model definition
         model = Sequential()
-        model.add(Conv2D(64, (1, 1), activation='relu',
-                         input_shape=(ny,nx,npar)))
-        #model.add(Dropout(0.1))
         model.add(Conv2D(64, (3, 3), activation='relu',
-                         padding='same'))
+                         padding='same',input_shape=(ny,nx,npar)))
+        #model.add(Dropout(0.1))
+#        model.add(Conv2D(64, (3, 3), activation='relu',
+#                         padding='same'))
 	#kernel_regularizer=regularizers.l1(0.001),
 	#)
-     #   model.add(Dropout(0.1))
-        model.add(Conv2D(32, (1, 1), activation='relu'))
+    #   model.add(Dropout(0.1))
+        model.add(Conv2D(64, (1, 1), activation='relu'))
         model.add(Conv2D(32, (1, 1), activation='relu'))
 
         model.add(Conv2D(1, (1, 1), activation='linear'))
@@ -93,7 +95,7 @@ else:
         nn = mymodel(model,moyX=moy,etX=et,moyY=moy_y,etY=et_y)
         
 #Training
-nn.fit(X_train+0*perturb/1000, y_train, epochs=2, batch_size=1,validation_split=0.1)
+nn.fit(X_train+0*perturb/1000, y_train, epochs=3000, batch_size=1,validation_split=0.1)
 
 y_predict = nn.predict(X_test)
 if not isdir(join(outdir, netname)):
