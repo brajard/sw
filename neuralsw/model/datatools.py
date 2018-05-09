@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 import os
 from os.path import join,isdir
-from shalw import SWmodel
+from .shalw import SWmodel
 import scipy.stats as st
 
 try:

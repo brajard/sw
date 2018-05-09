@@ -13,36 +13,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 #from datatools import cinetic_ener 
 import xarray as xr
-
+from neuralsw.model.modeltools import cinetic_ener, potential_ener, potential_vor
 figdir = '../data/figs'
 
 sres = {'lr','mr','hr'}
 
 #os.chdir(os.path.dirname(os.path.realpath(__file__)))
-
-def cinetic_ener (uphy, vphy,hphy,H):
-    u = uphy.stack(geo=('x','y'))
-    v = vphy.stack(geo=('x','y'))
-    h = hphy.stack(geo=('x','y'))
-
-    return 0.5*((h+H)*(u**2 + v**2)).mean(axis=1)
-
-def potential_ener(hphy,gstar,H):
-    h = hphy.stack(geo=('x','y'))
-    return 0.5*gstar*((h+H)**2).mean(axis=1)
-
-def potential_vor(uphy,vphy,hphy,dx,dy,H,f0,beta,y,yc=0):
-    u = np.pad(uphy,pad_width=1,mode='constant')
-    v = np.pad(vphy,pad_width=1,mode='constant')
-    nt,ny,nx = uphy.shape
-    dv = v[1:-1,1:-1,2:] - v[1:-1,1:-1:,1:-1]
-    du = u[1:-1,1:-1,1:-1] - u[1:-1,0:-2,1:-1]
-    zheta = dv/dx - du/dy
-    coriolis = f0 + beta*(y-yc)
-    coriolis = coriolis.expand_dims('xx',1).expand_dims('tt',0)
-    potential_vor = (zheta + coriolis).values/(hphy+H)
-    return potential_vor.stack(geo=('x','y')).mean(axis=1)
-
 
 #Initialize plots
 names = {'EC','EP','PV'}

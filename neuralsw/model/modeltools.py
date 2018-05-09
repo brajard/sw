@@ -1,8 +1,8 @@
 import numpy as np
 import pickle
 from keras.models import load_model
-from shalw import SWmodel
-from datatools import mydata, MakeBigImage
+from .shalw import SWmodel
+from .datatools import mydata, MakeBigImage
 import xarray as xr
 try:
 	import matplotlib.pyplot as plt
@@ -105,6 +105,49 @@ class mymodel:
 		outfield = MakeBigImage(y_predict,
 			ind=(field._indouty,field._indoutx))
 		return outfield
+
+def cinetic_ener (uphy=None, vphy=None,hphy=None,H=None,ds=None):
+	if ds is not None:
+		uphy = ds.uphy
+		vphy = ds.vphy
+		hphy = ds.hphy
+		H = ds.H
+	u = uphy.stack(geo=('x','y'))
+	v = vphy.stack(geo=('x','y'))
+	h = hphy.stack(geo=('x','y'))
+
+	return 0.5*((h+H)*(u**2 + v**2)).mean(axis=1)
+
+def potential_ener(hphy=None,gstar=None,H=None,ds=None):
+	if ds is not None:
+		hphy = ds.hphy
+		gstar = ds.gstar
+		H = ds.H
+	h = hphy.stack(geo=('x','y'))
+	return 0.5*gstar*((h+H)**2).mean(axis=1)
+
+def potential_vor(uphy=None,vphy=None,hphy=None,dx=None,dy=None,H=None,f0=None,beta=None,y=None,yc=0,ds=None):
+	if ds is not None:
+		uphy = ds.uphy
+		vphy = ds.vphy
+		hphy = ds.hphy
+		dx = ds.dx
+		dy = ds.dy
+		H = ds.H
+		f0 = ds.f0
+		beta = ds.beta
+		y = ds.y
+	u = np.pad(uphy,pad_width=1,mode='constant')
+	v = np.pad(vphy,pad_width=1,mode='constant')
+	nt,ny,nx = uphy.shape
+	dv = v[1:-1,1:-1,2:] - v[1:-1,1:-1:,1:-1]
+	du = u[1:-1,1:-1,1:-1] - u[1:-1,0:-2,1:-1]
+	zheta = dv/dx - du/dy
+	coriolis = f0 + beta*(y-yc)
+	coriolis = coriolis.expand_dims('xx',1).expand_dims('tt',0)
+	potential_vor = (zheta + coriolis).values/(hphy+H)
+	return potential_vor.stack(geo=('x','y')).mean(axis=1)
+
 
 if __name__ == "__main__":
 	name = '../data/model_upar.pkl'
