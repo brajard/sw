@@ -1,6 +1,6 @@
 """Use this file to generate the restart file"""
 
-from shalw import SWmodel
+from neuralsw.model.shalw import SWmodel
 import numpy as np
 import xarray as xr
 from tqdm import tqdm
@@ -10,8 +10,8 @@ try:
 	PLOT = True
 except:
 	PLOT = False
-endtime = 48*30*12*5 #86400 : 5 years
-outname = '../data/restartrun.nc'
+endtime = 48*30*12*1 #86400 : 5 years
+outname = '../../data/restartrun.nc'
 
 
 #Init model
@@ -26,7 +26,7 @@ for i in tqdm(range(endtime)):
 	SW.next()
 
 #Save the restart
-SW.save_rst('../data/restart_10years.nc')
+SW.save_rst('../../data/restart_10years.nc')
 
 #Plots
 ds = xr.open_dataset(outname)

@@ -5,13 +5,11 @@
 # # Script to run a restart
 # This script run the model from a rest state during 10 years in order to produce a restart start.
 
-# In[24]:
-
+# In[1]:
 
 ## Import package
 from neuralsw.model.shalw import SWmodel
 import neuralsw
-import neuralsw.model.modeltools as model
 import numpy as np
 import xarray as xr
 import os
@@ -20,8 +18,7 @@ import matplotlib.pyplot as plt
 #get_ipython()().magic('matplotlib notebook')
 
 
-# In[26]:
-
+# In[2]:
 
 ## Specify the output
 PLOT = True #if plot is wanted
@@ -44,8 +41,7 @@ endtime = 48*30*12*10 #10 years
 print('data directory:',datadir)
 
 
-# In[22]:
-
+# In[3]:
 
 ## Init model
 SW = SWmodel(nx=80,ny=80)
@@ -55,26 +51,26 @@ SW.initstate_cst(0,0,0)
 SW.save(time=np.arange(0,endtime,48*30),name=outname)
 
 
-# In[23]:
-
+# In[4]:
 
 # run the model
 for i in tqdm(range(endtime)):
     SW.next()
 
 
-# In[24]:
-
+# In[5]:
 
 # Save the restart
 SW.save_rst(rstfile)
 
 
-# In[23]:
-
+# In[6]:
 
 ## Plots conservative quantities
 if PLOT:
+    ## For some unresolved reasons , the keras modul (included in model) should not be called before dealing with nc files
+    import neuralsw.model.modeltools as model
+    
     ds = xr.open_dataset(outname)
 
     fig,ax = plt.subplots(nrows=3,sharex=True)
@@ -93,4 +89,9 @@ if PLOT:
     ax[2].set_title('mean potential vorticity')
     ax[2].set_ylabel('Pv')
     plt.show()
+
+
+# In[ ]:
+
+
 
