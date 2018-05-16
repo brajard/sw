@@ -22,6 +22,69 @@ def debug ( func ):
 
 	return func_wrapper
 
+class wind:
+	def __init__ (self,sw,taux0=0.15,tauy0=0.,sigx=0,sigy=0.):
+		self._taux0 = taux0
+		self._tauy0 = tauy0
+		self._sigx = sigx
+		self._sigy = sigy
+		self._taux = None
+		self._tauy = None
+
+		self._sw = sw #shallow water model to get some parameters
+	def set_params( self , **wargs):
+		for k, val in wargs.items():
+			setattr(self,k,val)
+
+	def compute_tau ( self ):
+		sw = self._sw
+		self._taux = self._taux0 * np.cos(
+			2 * np.pi * (np.tile(sw.y[:, np.newaxis], (1, sw.nx)) - sw.yc) / (sw.ny * sw.dy))
+		if self.sigx>0:
+			epsx = np.random.normal(0.0,self.sigx,self._taux.shape)
+			self._taux += epsx
+
+		self._tauy = self._tauy0 * np.ones((sw.ny, sw.nx))
+	@property
+	def sigx ( self ) :
+		return self._sigx
+	@sigx.setter
+	def sigx ( self , value ):
+		self._sigx = value
+
+	@property
+	def sigy ( self ) :
+		return self._sigy
+	@sigy.setter
+	def sigy( self, value ):
+		self._sigy = value
+
+	@property
+	def taux0 ( self ):
+		return self._taux0
+
+	@property
+	def tauy0 ( self ):
+		return self._tauy0
+
+	@property
+	def taux ( self ):
+		return self._taux
+
+	@property
+	def tauy ( self ):
+		return self._tauy
+
+	@tauy0.setter
+	def tauy0 ( self, value ):
+		self._tauy0 = value
+		if self._sw._recompute_grid:
+			self.compute_tau()
+	@taux0.setter
+	def taux0(self,value):
+		self._taux0 = value
+		if self._sw._recompute_grid:
+			self.compute_tau()
 
 
 class SWmodel:
@@ -29,7 +92,7 @@ class SWmodel:
 	_nedge = 1
 	#set of variables mandatory for a restart
 	_restVar = {'hphy','uphy','vphy','ufil','vfil','hfil'}
-	def __init__ ( self, f0=3.5e-5, beta=2.11e-11, gamma=2e-7, gstar=0.02,rho0=1000, H=500, taux0=0.15, tauy0=0, nu=0.72, dt=1800,
+	def __init__ ( self, f0=3.5e-5, beta=2.11e-11, gamma=2e-7, gstar=0.02,rho0=1000, H=500, fwind=None, warg={},nu=0.72, dt=1800,
 			dx=20e3, dy=20e3, alpha=0.025, nx=80, ny=80 ):
 
 		self._verbose = 1  # debug
@@ -58,8 +121,7 @@ class SWmodel:
 		self._beta = beta
 		self._gamma = gamma
 		self._rho0 = rho0
-		self._taux0 = taux0
-		self._tauy0 = tauy0
+
 		self._nu = nu
 		self._H = H
 
@@ -85,6 +147,13 @@ class SWmodel:
 
 		# State bool
 		self._isinit = False
+
+		#Forcing
+		self._warg = warg
+		if fwind is None:
+			self._wind = wind(sw=self,**warg)
+		else:
+			self._wind = wind(sw=self,**warg)
 
 		# compute all grids variables (except state)
 		self.compute_grid()
@@ -155,8 +224,10 @@ class SWmodel:
 		self.hdyn = (self.MCU() / self.dx + self.MCV() / self.dy)
 
 	def precompute( self ):
+		self.compute_tau()
 		self.VOR()
 		self.VIT()
+
 	def TAUX(self):
 		hphy = self._dstate['hphy']
 		moyh = .5*(hphy[self.ind((0,1))]+hphy[self.ind((0,0))])
@@ -330,7 +401,11 @@ class SWmodel:
 		(dy,dx)=delta
 		return (slice(type(self)._nedge+dy,self._endy+dy),slice(type(self)._nedge+dx,self._endx+dx))
 	def get_state(self,name):
-		return self._dstate[name][self.ind()]
+		if name in self._dstate:
+			return self._dstate[name][self.ind()]
+		else:
+			return getattr(self, name, None)
+
 	def set_state(self,name,value):
 		self._dstate[name][self.ind()] = value
 	@property
@@ -447,6 +522,15 @@ class SWmodel:
 	def dy ( self ):
 		return self._dy
 	@property
+	def fwind( self ):
+		return str(self._wind)
+	@property
+	def warg ( self ):
+		return str(self._warg)
+	def set_wind( self ,**warg):
+		self._warg = warg
+		self._wind.set_params(**warg)
+	@property
 	def dt(self):
 		return self._dt
 	@dx.setter
@@ -550,16 +634,17 @@ class SWmodel:
 
 	@debug
 	def compute_tau ( self ):
-		self._taux = self.taux0 * np.cos(
-			2 * np.pi * (np.tile(self.y[:, np.newaxis], (1, self.nx)) - self.yc) / (self.ny * self.dy))
-		self._tauy = self.tauy0 * np.ones((self.ny, self.nx))
+		self._wind.compute_tau()
+		# self._taux = self.taux0 * np.cos(
+		# 	2 * np.pi * (np.tile(self.y[:, np.newaxis], (1, self.nx)) - self.yc) / (self.ny * self.dy))
+		# self._tauy = self.tauy0 * np.ones((self.ny, self.nx))
 
 	@property
 	def taux(self):
-		return self._taux
+		return self._wind.taux
 	@property
 	def tauy(self):
-		return self._tauy
+		return self._wind.tauy
 	@property
 	def f0 ( self ):
 		return self._f0
@@ -601,25 +686,6 @@ class SWmodel:
 	@property
 	def rho0 ( self ):
 		return self._rho0
-
-	@property
-	def taux0 ( self ):
-		return self._taux0
-
-	@property
-	def tauy0 ( self ):
-		return self._tauy0
-
-	@tauy0.setter
-	def tauy0 ( self, value ):
-		self._tauy0 = value
-		if self._recompute_grid:
-			self.compute_tau()
-	@taux0.setter
-	def taux0(self,value):
-		self._taux0 = value
-		if self._recompute_grid:
-			self.compute_tau()
 
 
 	@classmethod
@@ -746,40 +812,45 @@ class SWparnlin(SWmodel):
 
 
 if __name__ == "__main__":
-	SW = SWmodel(nx=80,ny=80)
-	rfile = '../data/restart_10years.nc'
-	SW = SWmodel(nx=80, ny=80)
+	#SW = SWmodel(nx=80,ny=80)
+	rfile = '../../data/restart_10years.nc'
+
+	#parameters for wind forcing
+	warg = {'sigx':0.1}
+
+	SW = SWmodel(nx=80, ny=80, warg = warg)
 	SW.inistate_rst(rfile)
 	SW.set_time(0)
-	#time of the spinup
-	#endtime = 12*30*12*10 #10 years
-	endtime = 12*30*12*1
-	#Declare to save all phy parameters (default) every 12*30 time step(1 month)
-	#10000 is approximatively 13 months
-	para = {'hphy','hdyn','uphy','udyn','uforc','uparam'}
-	SW.save(time=np.arange(1,endtime,12*7),para=para,name='test.nc')
+	# #time of the spinup
+	# #endtime = 12*30*12*10 #10 years
+	endtime = 48*30*4*1
 
+
+	 #Declare to save all phy parameters (default) every 12*30 time step(1 month)
+	 #10000 is approximatively 13 months
+	para = {'hphy','uphy','vphy','taux'}
+	SW.save(time=np.arange(1,endtime,12*7),para=para,name='../../data/test.nc')
+	#
 	#Run the model
-	start = time.time()
-
+	# start = time.time()
+	#
 	for i in tqdm(range(endtime)):
 		SW.next()
-	end = time.time()
-	print('run duration',end - start,'seconds')
-	#SW.save_rst(name='restart.nc')
-	#Plot the final state
-
-
-
-	if PLOT:
-		ds = xr.open_dataset('test.nc')
-		#plt.imshow(SW.get_state('vor'))
-		#plt.colorbar()
-		#plt.show()
-		x,y = 20,41
-		fig, axes = plt.subplots(nrows=4,sharex=True)
-		ds.uphy.isel(x=x, y=y).plot(ax=axes[0])
-		ds.udyn.isel(x=x, y=y).plot(ax=axes[1])
-		ds.uparam.isel(x=x, y=y).plot(ax=axes[2])
-		ds.uforc.isel(x=x, y=y).plot(ax=axes[3])
-		plt.show()
+	# print('run duration',end - start,'seconds')
+	# #SW.save_rst(name='restart.nc')
+	# #Plot the final state
+	#
+	#
+	#
+	# if PLOT:
+	# 	ds = xr.open_dataset('test.nc')
+	# 	#plt.imshow(SW.get_state('vor'))
+	# 	#plt.colorbar()
+	# 	#plt.show()
+	# 	x,y = 20,41
+	# 	fig, axes = plt.subplots(nrows=4,sharex=True)
+	# 	ds.uphy.isel(x=x, y=y).plot(ax=axes[0])
+	# 	ds.udyn.isel(x=x, y=y).plot(ax=axes[1])
+	# 	ds.uparam.isel(x=x, y=y).plot(ax=axes[2])
+	# 	ds.uforc.isel(x=x, y=y).plot(ax=axes[3])
+	# 	plt.show()
