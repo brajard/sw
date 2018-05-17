@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from inspect import signature
+from scipy import signal
 import warnings
 from collections import defaultdict
 import numpy as np
@@ -23,35 +24,89 @@ def debug ( func ):
 	return func_wrapper
 
 class wind:
-	def __init__ (self,sw,taux0=0.15,tauy0=0.,sigx=0,sigy=0.):
+	def __init__ (self,sw,taux0=0.15,tauy0=0.,sigx=0,sigy=0.,arx=0,ary=0,convx=0,convy=0):
 		self._taux0 = taux0
 		self._tauy0 = tauy0
 		self._sigx = sigx
 		self._sigy = sigy
 		self._taux = None
 		self._tauy = None
-
+		self._taux_cst = None
+		self._taux_cst = None
+		self._arx = arx
+		self._ary = ary
 		self._sw = sw #shallow water model to get some parameters
+		self._convx = max(0,int(convx))
+		self._convy = max(0,int(convy))
+		self._kernx = None
+		self._kerny = None
+
+
+	def init_wind( self ):
+		sw = self._sw
+		self._taux_cst = self._taux0 * np.cos(
+			2 * np.pi * (np.tile(sw.y[:, np.newaxis], (1, sw.nx)) - sw.yc) / (sw.ny * sw.dy))
+		self._tauy_cst = self._tauy0 * np.ones((sw.ny, sw.nx))
+		self._taux = self._taux_cst
+		self._tauy = self._tauy_cst
+		self._epsx = np.zeros(self._taux_cst.shape)
+		self._epsy = np.zeros(self._tauy_cst.shape)
+		if self._convx > 0:
+			self._kernx = np.ones((self.convx,self.convx))/(self.convx**2)
+		if self._convy > 0:
+			self._kerny = np.ones((self.convy,self.convy))/(self.convy**2)
+
 	def set_params( self , **wargs):
 		for k, val in wargs.items():
 			setattr(self,k,val)
 
 	def compute_tau ( self ):
-		sw = self._sw
-		self._taux = self._taux0 * np.cos(
-			2 * np.pi * (np.tile(sw.y[:, np.newaxis], (1, sw.nx)) - sw.yc) / (sw.ny * sw.dy))
 		if self.sigx>0:
 			epsx = np.random.normal(0.0,self.sigx,self._taux.shape)
-			self._taux += epsx
+			if self.convx >0:
+				epsx = signal.convolve2d(epsx,self._kernx,mode='same')
+			self._epsx = self._arx*self._epsx + epsx
+			self._taux = self._taux_cst + self._epsx
+		if self.sigy>0:
+			epsy = np.random.normal(0.0,self.sigy,self._tauy.shape)
+			if self.convy >0:
+				epsx = signal.convolve2d(epsy,self._kerny,mode='same')
 
-		self._tauy = self._tauy0 * np.ones((sw.ny, sw.nx))
+			self._epsy = self._ary*self._epsy + epsy
+			self.tauy = self._tauy_cst + self._epsy
+
+
 	@property
 	def sigx ( self ) :
 		return self._sigx
 	@sigx.setter
 	def sigx ( self , value ):
 		self._sigx = value
+	@property
+	def convx( self ):
+		return self._convx
+	@convx.setter
+	def convx( self , value ):
+		self._convx = max(0, int(value))
+	@property
+	def convy( self ):
+		return self._convy
+	@convy.setter
+	def convy( self , value ):
+		self._convy = max(0, int(value))
 
+	@property
+	def arx ( self ) :
+		return self._arx
+	@arx.setter
+	def arx( self , value ):
+		self._arx = value
+	@property
+	def ary ( self ) :
+		return self._ary
+	@ary.setter
+	def ary( self , value ):
+		self._ary = value
 	@property
 	def sigy ( self ) :
 		return self._sigy
@@ -603,7 +658,7 @@ class SWmodel:
 		self.compute_grid_x()
 		self.compute_grid_y()
 		self.compute_coriolis()
-		self.compute_tau()
+		self._wind.init_wind()
 		self.compute_grid_state()
 
 	@debug
@@ -816,7 +871,7 @@ if __name__ == "__main__":
 	rfile = '../../data/restart_10years.nc'
 
 	#parameters for wind forcing
-	warg = {'sigx':0.1}
+	warg = {'sigx':0.1,'convx':5,'arx':0.3}
 
 	SW = SWmodel(nx=80, ny=80, warg = warg)
 	SW.inistate_rst(rfile)
