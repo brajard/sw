@@ -13,6 +13,13 @@ try:
 except:
 	PLOT = False
 
+def TimeSeq(endtime,freq,start=0,nseq=2):
+	starts = np.arange(start, endtime, freq)
+	time = np.empty(shape=(0,), dtype=int)
+	for s in starts:
+		time = np.concatenate((time, np.arange(s,s+nseq)), axis=0)
+	return time
+
 def MakeBigImage(smallimage,ind):
 	indy,indx = ind
 	ny,nx = max(indy)+1,max(indx)+1
