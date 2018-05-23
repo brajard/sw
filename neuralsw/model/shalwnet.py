@@ -1,3 +1,4 @@
+
 from .shalw import SWmodel
 from .modeltools import loadmymodel
 from .datatools import MakeSmallImages, MakeBigImage,  MakeSmallImages_ind
@@ -10,7 +11,7 @@ class SWparnn(SWmodel):
 			rho0=1000, H=500, fwind=None, warg=dict(), nu=0.72, dt=1800, dx=20e3, dy=20e3, alpha=0.025, nx=80, ny=80):
 		SWmodel.__init__(self,f0, beta, gamma, gstar,rho0, H, fwind, warg, nu, dt,
 			dx, dy, alpha, nx, ny )
-
+		print('NEW VERSION')
 		if isinstance(nnupar, str):
 			self._nnupar = loadmymodel(nnupar)
 		else:
@@ -141,3 +142,17 @@ class SWparnnhdyn(SWmodel):
 	@property
 	def nnhdyn( self ):
 		return self._nnhdynname
+
+if __name__ == "__main__":
+	rfile = '../../data/restart_10years.nc'
+	nnufile = '../../data/nn-uparam-im/model_upar-im.pkl'
+	nnvfile = '../../data/nn-vparam-im/model_vpar-im.pkl'
+
+	SW0 = SWmodel()
+	SW0.inistate_rst(rtile)
+	SW0.set_time(0)
+
+	SW1 = SWparnnim(nnupar=nnufile,nnvpar=nnvfile)
+	SW1.inistate_rst(rtile)
+	SW1.set_time(0)
+
