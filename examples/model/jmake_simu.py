@@ -9,6 +9,7 @@
 
 ## Import package
 from neuralsw.model.shalw import SWmodel
+from neuralsw.model.datatools import TimeSeq 
 import neuralsw
 import numpy as np
 import xarray as xr
@@ -18,7 +19,7 @@ import matplotlib.pyplot as plt
 #get_ipython()().magic('matplotlib notebook')
 
 
-# In[31]:
+# In[2]:
 
 ## Specify the output
 PLOT = True #if plot is wanted
@@ -36,8 +37,11 @@ endtime = 48*30*12*40 #40 years (can be override by option in allsets)
 #save frequency
 freq = 48*30 #each month (can be overrieded by option in allsets)
 
+#number of successive time steps to save at a given time
+nseq = 2
+
 #param to save
-param = {'hphy','uphy','vphy','taux','tauy','uparam','vaparam'}
+param = {'hphy','uphy','vphy','taux','tauy','uparam','vparam'}
 print('data directory:',datadir)
 
 
@@ -53,12 +57,12 @@ print('data directory:',datadir)
 # -  `'freq'`: change the default frequency of save
 # - `'warg'`: specify forcing args in the SW model 
 
-# In[32]:
+# In[3]:
 
 ## Specifiy types of dataset to run
 
 warg0 = {'sigx':0.1} #a example of forcing arg
-
+warg1 = {'sigx':0.1,'arx':0.6,'convx':5}
 
 #restartfile for app
 rstfile = os.path.join(datadir,'restart_10years.nc')
@@ -70,9 +74,11 @@ rstfile_test = os.path.join(datadir,'restart_test.nc')
 # SPECIFY THE TYPE OF DATASET TO BE GENEREATED (SEE ABOVE)   #
 ##############################################################
 allsets = {0:{'suf':'std','type':'train','rst':rstfile,'saverst':rstfile_test},
-           1:{'suf':'windvar','type':'test','endtime':48*30*12*10,'warg':warg0,'rst':rstfile_test}}
+           1:{'suf':'windvar','type':'test','endtime':48*30*12*10,'warg':warg0,'rst':rstfile_test},
+           2:{'suf':'warsmooth','type':'test','endtime':48*30*12*10,'warg':warg1,'rst':rstfile_test},
+           3:{'suf':'std','type':'test','endtime':48*30*12*10,'rst':rstfile_test}}
 
-selected = 1 #to be change to create more sets
+selected = 0 #to be change to create more sets
 ###############################################################
            
 dset = allsets[selected]
@@ -83,45 +89,50 @@ fname = os.path.join(datadir,dset['type']+'_dataset_'+dset['suf']+'.nc')
 print('filename:',fname)
 
 
-# In[33]:
+# In[4]:
 
 ## redefine some options
 if 'endtime' in dset:
     endtime = dset['endtime']
 if 'freq' in dset:
     freq = dset['freq']
+if 'nseq' in dset:
+    nseq = dset['nseq']
 if 'warg' in dset:
     warg = dset['warg']
 else:
     warg = dict()
 
 
-# In[34]:
+# In[5]:
 
 ## Init model for training set
 SW = SWmodel(nx=80,ny=80,warg=warg)
 SW.inistate_rst(rstfile)
 SW.set_time(0)
 
-#Save every month
-SW.save(time=np.arange(0,endtime,freq),name=fname,para=param)
+#time
+time = TimeSeq(endtime=endtime,freq=freq,start=0,nseq=nseq)
+
+#Save every freq
+SW.save(time=time,name=fname,para=param)
 
 
-# In[35]:
+# In[6]:
 
 # run the model for training set
 for i in tqdm(range(endtime)):
     SW.next()
 
 
-# In[26]:
+# In[7]:
 
 # Save the restart for test set
 if 'saverst' in dset:
     SW.save_rst(dset['saverst'])
 
 
-# In[20]:
+# In[8]:
 
 ## Plots conservative quantities for training set
 if PLOT:
@@ -154,7 +165,7 @@ if PLOT:
 
 ## Plots mean states for training
 if PLOT:
-    ds = xr.open_dataset(trainame)
+    ds = xr.open_dataset(fname)
 
     fig,ax = plt.subplots(nrows=3,sharex=True)
     ds['hphy'].mean(dim='time').plot(ax=ax[0])
