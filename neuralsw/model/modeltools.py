@@ -148,6 +148,9 @@ def potential_vor(uphy=None,vphy=None,hphy=None,dx=None,dy=None,H=None,f0=None,b
 	potential_vor = (zheta + coriolis).values/(hphy+H)
 	return potential_vor.stack(geo=('x','y')).mean(axis=1)
 
+def aumax(dn,range=5):
+	"""find the position of the maximum u velocity at west border"""
+	return dn.uphy[:,:,:range].mean(dim='x').argmax('y')
 
 if __name__ == "__main__":
 	name = '../data/model_upar.pkl'
