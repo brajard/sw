@@ -7,7 +7,7 @@ setup(
 #    license='MIT',
     description='A python package for testing NN parameterization in a SW model',
     long_description=open('README.md').read(),
-    install_requires=['tensorflow','keras','xarray','tqdm','scipy','h5py','sklearn','matplotlib','numpy'],
+    install_requires=['tensorflow','keras','xarray','tqdm','scipy','h5py','sklearn','matplotlib','numpy','jupyter','netcdf4'],
     url='https://github.com/brajard/sw',
     author='Julien Brajard',
     author_email='julien.brajard@locean-ipsl.upmc.fr'

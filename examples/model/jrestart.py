@@ -5,7 +5,8 @@
 # # Script to run a restart
 # This script run the model from a rest state during 10 years in order to produce a restart start.
 
-# In[1]:
+# In[ ]:
+
 
 ## Import package
 from neuralsw.model.shalw import SWmodel
@@ -15,10 +16,11 @@ import xarray as xr
 import os
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-#get_ipython()().magic('matplotlib notebook')
+#get_ipython()().run_line_magic('matplotlib', 'notebook')
 
 
-# In[2]:
+# In[ ]:
+
 
 ## Specify the output
 PLOT = True #if plot is wanted
@@ -29,11 +31,15 @@ rootdir = os.path.realpath(	os.path.join(os.getcwd(),'../..'))
 #directory to store the data
 datadir = os.path.realpath(os.path.join(rootdir,'data'))
 
+#suffix (modify default parameters if not empty)
+suf = '_low'
+
 #savefile (to check the run)
-outname = os.path.join(datadir,'restartrun.nc')
+outname = os.path.join(datadir,'restartrun'+ suf + '.nc')
 
 #restartfile
-rstfile = os.path.join(datadir,'restart_10years.nc')
+
+rstfile = os.path.join(datadir,'restart_10years'+ suf +'.nc')
 
 #Duration of the integration
 endtime = 48*30*12*10 #10 years
@@ -41,30 +47,38 @@ endtime = 48*30*12*10 #10 years
 print('data directory:',datadir)
 
 
-# In[3]:
+# In[ ]:
+
 
 ## Init model
-SW = SWmodel(nx=80,ny=80)
+if 'low' in rstfile:
+    SW = SWmodel(nx=80,ny=80,warg={'taux0':0.1})
+else:
+    SW = SWmodel(nx=80,ny=80)
 SW.initstate_cst(0,0,0)
+
 
 #Save every month
 SW.save(time=np.arange(0,endtime,48*30),name=outname)
 
 
-# In[4]:
+# In[ ]:
+
 
 # run the model
 for i in tqdm(range(endtime)):
     SW.next()
 
 
-# In[5]:
+# In[ ]:
+
 
 # Save the restart
 SW.save_rst(rstfile)
 
 
-# In[6]:
+# In[ ]:
+
 
 ## Plots conservative quantities
 if PLOT:
@@ -89,9 +103,4 @@ if PLOT:
     ax[2].set_title('mean potential vorticity')
     ax[2].set_ylabel('Pv')
     plt.show()
-
-
-# In[ ]:
-
-
 

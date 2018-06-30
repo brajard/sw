@@ -5,7 +5,8 @@
 # # Script to make simu
 # This script run the model from a restart to produce a reference simulation for training or testing the NN.
 
-# In[1]:
+# In[ ]:
+
 
 ## Import package
 from neuralsw.model.shalw import SWmodel
@@ -16,10 +17,11 @@ import xarray as xr
 import os
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-#get_ipython()().magic('matplotlib notebook')
+#get_ipython()().run_line_magic('matplotlib', 'notebook')
 
 
-# In[2]:
+# In[ ]:
+
 
 ## Specify the output
 PLOT = True #if plot is wanted
@@ -57,7 +59,8 @@ print('data directory:',datadir)
 # -  `'freq'`: change the default frequency of save
 # - `'warg'`: specify forcing args in the SW model 
 
-# In[3]:
+# In[ ]:
+
 
 ## Specifiy types of dataset to run
 
@@ -89,7 +92,8 @@ fname = os.path.join(datadir,dset['type']+'_dataset_'+dset['suf']+'.nc')
 print('filename:',fname)
 
 
-# In[4]:
+# In[ ]:
+
 
 ## redefine some options
 if 'endtime' in dset:
@@ -104,11 +108,12 @@ else:
     warg = dict()
 
 
-# In[5]:
+# In[ ]:
+
 
 ## Init model for training set
 SW = SWmodel(nx=80,ny=80,warg=warg)
-SW.inistate_rst(rstfile)
+SW.inistate_rst(dset['rst'])
 SW.set_time(0)
 
 #time
@@ -118,21 +123,24 @@ time = TimeSeq(endtime=endtime,freq=freq,start=0,nseq=nseq)
 SW.save(time=time,name=fname,para=param)
 
 
-# In[6]:
+# In[ ]:
+
 
 # run the model for training set
 for i in tqdm(range(endtime)):
     SW.next()
 
 
-# In[7]:
+# In[ ]:
+
 
 # Save the restart for test set
 if 'saverst' in dset:
     SW.save_rst(dset['saverst'])
 
 
-# In[8]:
+# In[ ]:
+
 
 ## Plots conservative quantities for training set
 if PLOT:
@@ -161,7 +169,8 @@ if PLOT:
     print ('Mean value of Pv: {0:3.2e}'.format(float(Pv.mean())))
 
 
-# In[9]:
+# In[ ]:
+
 
 ## Plots mean states for training
 if PLOT:
@@ -182,9 +191,4 @@ if PLOT:
     plt.show()
     
     
-
-
-# In[ ]:
-
-
 
