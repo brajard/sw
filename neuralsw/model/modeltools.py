@@ -31,9 +31,10 @@ def denormalize(Xn,moy,et,fdenorm=invstandardization):
 		X[...,j] = fdenorm(Xn[...,j],moy[j],et[j])
 	return X
 
-def loadmymodel(fname):
+def loadmymodel(fname,modelfile=None):
+    #Modelfile contains h5 file for the weights
 	nn = pickle.load(open(fname, "rb"))
-	nn.load_model()
+	nn.load_model(modelfile)
 	return nn
 
 class mymodel:
@@ -89,8 +90,10 @@ class mymodel:
 		with open(fname,'wb') as f:
 			pickle.dump(self, f, -1)
 		self._model = savemodel
-	def load_model( self ):
-		self._model = load_model(self._modelfile)
+	def load_model( self, modelfile=None ):
+		if modelfile is None:
+			modelfile = self._modelfile
+		self._model = load_model(modelfile)
 	def predictfield( self,data,outfield,infield, forcfield,
 	SW=None):
 		if SW is None:
