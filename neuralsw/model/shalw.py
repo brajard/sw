@@ -840,6 +840,55 @@ class SWmodel:
 
 		return self
 
+
+class SWda(SWmodel):
+	"""Same as SWmodel but the computation of ufil and uphy are in a different order
+	such as the output of the next method is uphy"""
+	# Core of model
+	def next ( self ):
+		"""
+		input xfil:Xfil(t-3) xpre:X(t-2), xphy:X(t-1)
+		output xfil:Xfil(t-2) xpre:X(t-1), xphy(Xt)
+		:return:
+		"""
+		assert self._isinit, 'model not initialised'
+
+		self.updatesave()
+
+		# asselin filtering
+		self.ufil = self.upre + self.alpha * (self.ufil - 2 * self.upre + self.uphy)
+		self.vfil = self.vpre + self.alpha * (self.vfil - 2 * self.vpre + self.vphy)
+		self.hfil = self.hpre + self.alpha * (self.hfil - 2 * self.hpre + self.hphy)
+
+		# upre,vpre,hpre
+		self._dstate['hpre'] = self._dstate['hphy'].copy()
+		self._dstate['upre'] = self._dstate['uphy'].copy()
+		self._dstate['vpre'] = self._dstate['vphy'].copy()
+
+		# precomputation VOR et VIT computation
+		self.precompute()
+
+		# uphy,vphy,hphy
+		# self.hdyn = (self.MCU() / self.dx + self.MCV() / self.dy)
+		self.computehdyn()
+		self.hphy = self.hfil - 2 * self.dt * self.hdyn
+
+		self.computeuparam()
+		self.computeudyn()
+		self.uphy = self.ufil + 2 * self.dt * (self.udyn + self.uparam)
+
+		self.computevparam()
+		self.computevdyn()
+		self.vphy = self.vfil + 2 * self.dt * (self.vdyn + self.vparam)
+
+		# self.vphy[-1,:] = 0
+		# self.vphy[0,:] = 0
+
+		# ufil,vfil,hfil =
+
+		self._t += 1
+
+
 class SWparnlin(SWmodel):
 	def __init__ ( self, f0=3.5e-5, beta=2.11e-11, gamma=2e-7, gstar=0.02,rho0=1000, H=500, taux0=0.15, tauy0=0, nu=0.72, dt=1800,
 			dx=20e3, dy=20e3, alpha=0.025, nx=80, ny=80 ):
