@@ -845,6 +845,7 @@ class SWda(SWmodel):
 	"""Same as SWmodel but the computation of ufil and uphy are in a different order
 	such as the output of the next method is uphy"""
 	# Core of model
+	_restVar = { 'hphy', 'uphy', 'vphy', 'ufil', 'vfil', 'hfil','hpre','vpre','upre' }
 	def next ( self ):
 		"""
 		input xfil:Xfil(t-3) xpre:X(t-2), xphy:X(t-1)
